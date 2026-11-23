@@ -1,0 +1,30 @@
+# IDE / OS
+.idea/
+*.iml
+.vscode/
+.DS_Store
+
+# Java
+build/
+.gradle/
+out/
+
+# Python
+__pycache__/
+.venv/
+*.pyc
+.pytest_cache/
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Data (never commit raw data or dumps)
+data/raw/*
+!data/raw/.gitkeep
+dumps/*
+!dumps/.gitkeep
+*.hwp
+*.dump
+*.sql.gz

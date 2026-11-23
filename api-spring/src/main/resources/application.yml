@@ -1,0 +1,20 @@
+spring:
+  application:
+    name: sona-api
+  profiles:
+    default: local
+  # 루트 .env를 프로퍼티로 읽음 (IDE/bootRun 실행 시). OS 환경변수가 항상 우선.
+  config:
+    import:
+      - optional:file:./.env[.properties]
+      - optional:file:../.env[.properties]
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate   # 스키마는 infra/init.sql이 소유. create/update로 바꾸지 말 것
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
