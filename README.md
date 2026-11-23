@@ -7,11 +7,10 @@
 ```
 server/
 ├── api-spring/        # Spring Boot API (+ Dockerfile)
-├── ai-fastapi/        # FastAPI RAG/LLM 서버 (+ Dockerfile)
 ├── scripts/
 │   ├── db-dump.ps1 / db-dump.sh        # 로컬 DB → dumps/sona.dump
 │   ├── db-restore.ps1 / db-restore.sh  # dumps/sona.dump → 로컬 DB
-│   └── collector/     # 금감원 데이터 수집 (일회성)
+│   └── collector/     # 금감원 데이터 수집·임베딩 (Python, 일회성)
 ├── infra/
 │   ├── docker-compose.yml
 │   └── init.sql       # DB 스키마 (스키마의 단일 소유자)
@@ -29,22 +28,21 @@ server/
 | | Gradle (wrapper) | 9.9.2 |
 | | springdoc-openapi-starter-webmvc-ui | 2.10.1 |
 | | Spring Data JPA, Validation, Actuator, AMQP, Data Redis, Lombok | Spring Boot BOM 관리 |
-| AI | Python | 3.11 |
-| | FastAPI | 0.165.0 |
-| | uvicorn[standard] | 0.54.0 |
+| 임베딩 | OpenAI `text-embedding-3-small` (1536차원) | Spring 설정 `sona.embedding.*` |
+| 스크립트 | Python (`scripts/` 수집·임베딩) | 3.11 |
 | DB | PostgreSQL + pgvector | `pgvector/pgvector:pg16` (pgvector 0.8.7) |
 | 메시징 | RabbitMQ | `rabbitmq:3.13.7-management` |
 | 캐시 | Redis | `redis:7.4.12` |
 | 앱 이미지 | Spring 빌드 / 실행 | `eclipse-temurin:21-jdk` / `eclipse-temurin:21-jre` |
-| | FastAPI | `python:3.11-slim` |
 | 인프라 | Docker Compose | |
 
-버전을 바꿀 때는 이 표와 함께 `api-spring/build.gradle`, `api-spring/gradle/wrapper/gradle-wrapper.properties`, `ai-fastapi/requirements.txt`, `infra/docker-compose.yml`, 각 `Dockerfile`을 같이 수정합니다.
+버전을 바꿀 때는 이 표와 함께 `api-spring/build.gradle`, `api-spring/gradle/wrapper/gradle-wrapper.properties`, `api-spring/Dockerfile`, `infra/docker-compose.yml`을 같이 수정합니다.
 
 ## 사전 설치
 
 - **공통(필수)**: [Docker Desktop](https://www.docker.com/products/docker-desktop/)
-- **백엔드 개발자 추가**: Java 21, Python 3.11, IntelliJ IDEA
+- **백엔드 개발자 추가**: Java 21, IntelliJ IDEA
+- **수집·임베딩 스크립트 실행 시에만**: Python 3.11
 
 ## 처음 한 번: `.env` 만들기
 
@@ -58,7 +56,7 @@ Copy-Item .env.example .env
 cp .env.example .env
 ```
 
-`.env`를 열어 `POSTGRES_PASSWORD`, `RABBITMQ_PASSWORD`에 **로컬용 아무 값**이나 채웁니다. 값이 비어 있으면 compose가 실행되지 않습니다. AI 기능을 쓸 때만 `OPENAI_API_KEY`를 채우면 됩니다.
+`.env`를 열어 `POSTGRES_PASSWORD`, `RABBITMQ_PASSWORD`에 **로컬용 아무 값**이나 채웁니다. 값이 비어 있으면 compose가 실행되지 않습니다. 임베딩(OpenAI)을 쓸 때만 `OPENAI_API_KEY`를 채우면 됩니다.
 
 > `.env`는 절대 커밋하지 않습니다. `.gitignore`에 등록되어 있습니다.
 
@@ -88,26 +86,6 @@ cd api-spring && ./gradlew bootRun
 
 루트 `.env`를 자동으로 읽기 때문에 IntelliJ에 환경변수를 따로 넣지 않아도 됩니다. 기본 프로필은 `local`입니다.
 
-3) FastAPI
-
-```powershell
-# Windows PowerShell
-cd ai-fastapi
-py -3.11 -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-uvicorn app.main:app --reload --port 8000
-```
-
-```bash
-# Mac
-cd ai-fastapi
-python3.11 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-uvicorn app.main:app --reload --port 8000
-```
-
 ### B. 프론트 개발자: 백엔드 전체를 컨테이너로
 
 ```bash
@@ -122,8 +100,6 @@ docker compose -f infra/docker-compose.yml --env-file .env --profile app up -d -
 |---|---|
 | Spring health | http://localhost:8080/api/health |
 | Swagger UI | http://localhost:8080/swagger-ui/index.html |
-| FastAPI health | http://localhost:8000/health |
-| FastAPI docs | http://localhost:8000/docs |
 | RabbitMQ 관리 화면 | http://localhost:15672 (`.env`의 RABBITMQ_USER / PASSWORD) |
 | PostgreSQL | localhost:5432 (`.env` 값) |
 
