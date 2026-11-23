@@ -13,6 +13,12 @@ spring:
     hibernate:
       ddl-auto: validate   # 스키마는 infra/init.sql이 소유. create/update로 바꾸지 말 것
 
+sona:
+  embedding:
+    model: text-embedding-3-small
+    dimensions: 1536        # infra/init.sql의 vector(1536)과 맞출 것
+    api-key: ${OPENAI_API_KEY:}
+
 management:
   endpoints:
     web:
