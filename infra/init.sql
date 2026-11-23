@@ -21,6 +21,7 @@ CREATE TABLE dispute_case (
     source_url       VARCHAR(500) NOT NULL UNIQUE,
     source_key       VARCHAR(50),                 -- caseSlno / prcdntSlno
     category         VARCHAR(30),                 -- 보험 / 은행·중소서민 / 금융투자
+    product_type     VARCHAR(100),                -- 상세의 '유형' (예: 실손보험(치료비), 자동차보험(대인))
     title            VARCHAR(500) NOT NULL,
     summary          TEXT,                        -- 해결기준의 '요지'
     complaint        TEXT,                        -- ▣ 민원내용
