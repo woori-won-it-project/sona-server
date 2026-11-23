@@ -1,0 +1,10 @@
+# 테스트 전용 프로필 (CI의 postgres service, 로컬은 같은 값의 테스트 DB).
+# 값은 테스트 전용이며 실제 비밀번호가 아니다. 루트 .env 의 POSTGRES_* 와 섞이지 않도록 TEST_DB_* 를 쓴다.
+spring:
+  datasource:
+    url: ${TEST_DB_URL:jdbc:postgresql://localhost:5432/sona_test}
+    username: ${TEST_DB_USER:sona_test}
+    password: ${TEST_DB_PASSWORD:sona_test}
+  jpa:
+    hibernate:
+      ddl-auto: validate
