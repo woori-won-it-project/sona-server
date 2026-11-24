@@ -8,9 +8,9 @@
 server/
 ├── api-spring/        # Spring Boot API (+ Dockerfile)
 ├── scripts/
-│   ├── db-dump.ps1 / db-dump.sh        # 로컬 DB → dumps/sona.dump
-│   ├── db-restore.ps1 / db-restore.sh  # dumps/sona.dump → 로컬 DB
-│   └── collector/     # 금감원 데이터 수집·임베딩 (Python, 일회성)
+│   ├── db-dump.ps1 / db-dump.sh        # 로컬 DB → dumps/sona_YYYY-MM-DD.dump
+│   ├── db-restore.ps1 / db-restore.sh  # dump 파일 → 로컬 DB
+│   └── collector/     # 금감원 데이터 수집·청크·임베딩 (Python, 일회성)
 ├── infra/
 │   ├── docker-compose.yml
 │   └── init.sql       # DB 스키마 (스키마의 단일 소유자)
@@ -105,20 +105,33 @@ docker compose -f infra/docker-compose.yml --env-file .env --profile app up -d -
 
 ## 데이터 받기 (dump 복원)
 
-1. 팀 드라이브에서 `sona.dump`를 받아 `dumps/sona.dump`에 넣습니다.
-2. 인프라가 떠 있는 상태에서 복원 스크립트를 실행합니다.
+dump 파일 이름은 `sona_YYYY-MM-DD.dump`(만든 날짜) 형식입니다.
+
+1. 팀 드라이브에서 최신 dump(예: `sona_2026-11-24.dump`)를 받아 `dumps/`에 넣습니다.
+2. 인프라가 떠 있는 상태에서 복원 스크립트를 실행합니다. 인자가 없으면 `dumps/`에서 **가장 최근에 수정된** `.dump` 파일을 복원하고, 시작 전에 어떤 파일인지 출력합니다. 특정 파일을 복원하려면 경로를 인자로 줍니다.
 
 ```powershell
 # Windows PowerShell
-.\scripts\db-restore.ps1
+.\scripts\db-restore.ps1                              # dumps/ 의 최신 .dump
+.\scripts\db-restore.ps1 dumps\sona_2026-11-24.dump   # 파일 지정
 ```
 
 ```bash
 # Mac
-bash scripts/db-restore.sh
+bash scripts/db-restore.sh                              # dumps/ 의 최신 .dump
+bash scripts/db-restore.sh dumps/sona_2026-11-24.dump   # 파일 지정
 ```
 
-로컬에 PostgreSQL 클라이언트가 없어도 됩니다. 스크립트가 `docker` 명령으로 컨테이너 안의 도구를 사용합니다. dump 만들기는 `db-dump.ps1` / `db-dump.sh`로 합니다(데이터 담당자 전용).
+> 받은 파일의 수정 시각이 다운로드 시각으로 바뀌므로, `dumps/`에 dump가 여러 개 있으면 파일을 지정하는 편이 안전합니다.
+
+로컬에 PostgreSQL 클라이언트가 없어도 됩니다. 스크립트가 `docker` 명령으로 컨테이너 안의 도구를 사용합니다.
+
+dump 만들기(데이터 담당자 전용): `db-dump.ps1` / `db-dump.sh`. 인자가 없으면 `dumps/sona_YYYY-MM-DD.dump`(오늘 날짜)로 저장하고, 경로를 인자로 주면 그 경로로 저장합니다(같은 이름이 있으면 덮어씁니다).
+
+```powershell
+.\scripts\db-dump.ps1                     # dumps/sona_<오늘>.dump
+.\scripts\db-dump.ps1 dumps\test.dump     # 경로 지정
+```
 
 > PowerShell에서 스크립트 실행이 막히면 `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`를 한 번 실행하세요.
 
@@ -130,7 +143,7 @@ bash scripts/db-restore.sh
 git pull
 docker compose -f infra/docker-compose.yml --env-file .env down -v   # -v: DB 데이터 삭제
 docker compose -f infra/docker-compose.yml --env-file .env up -d
-# 최신 sona.dump를 dumps/에 넣고 restore 스크립트 실행
+# 최신 dump(sona_YYYY-MM-DD.dump)를 dumps/에 넣고 restore 스크립트 실행
 ```
 
 ## 주의사항

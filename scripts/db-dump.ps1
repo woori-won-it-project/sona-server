@@ -1,11 +1,18 @@
-# Local DB (docker postgres) -> dumps/sona.dump
-# Usage (repo root): .\scripts\db-dump.ps1
+# Local DB (docker postgres) -> dump file
+# Usage (repo root):
+#   .\scripts\db-dump.ps1                      # dumps/sona_YYYY-MM-DD.dump (today)
+#   .\scripts\db-dump.ps1 dumps/my.dump        # given path
+param([string]$OutFile)
 $ErrorActionPreference = 'Stop'
 
 $Root = Split-Path -Parent $PSScriptRoot
 $EnvFile = Join-Path $Root '.env'
 $ComposeFile = Join-Path $Root 'infra/docker-compose.yml'
-$OutFile = Join-Path $Root 'dumps/sona.dump'
+if (-not $OutFile) {
+    $OutFile = Join-Path $Root ("dumps/sona_{0}.dump" -f (Get-Date -Format 'yyyy-MM-dd'))
+} elseif (-not [System.IO.Path]::IsPathRooted($OutFile)) {
+    $OutFile = Join-Path (Get-Location).Path $OutFile
+}
 
 if (-not (Test-Path $EnvFile)) { throw '.env not found. Copy .env.example to .env first.' }
 $EnvVars = @{}

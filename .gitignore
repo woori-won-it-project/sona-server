@@ -28,3 +28,4 @@ dumps/*
 *.hwp
 *.dump
 *.sql.gz
+data/*.zip
