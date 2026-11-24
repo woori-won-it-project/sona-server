@@ -1,3 +1,4 @@
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
 CREATE EXTENSION IF NOT EXISTS vector;
 
 -- 수집 작업 이력
@@ -33,9 +34,61 @@ CREATE TABLE dispute_case (
     attachments      JSONB,                       -- 첨부파일 목록 [{name, url, local_path, size}]
     meta             JSONB,                       -- 화면에 있는 나머지 메타데이터 전부 (스키마 변경 없이 보관)
     registered_at    DATE,                        -- 게시일
-    embedding        vector(1536),                -- 임베딩 모델 확정 전까지 NULL. 차원은 모델에 따라 변경
     created_at       TIMESTAMP NOT NULL DEFAULT now(),
     updated_at       TIMESTAMP NOT NULL DEFAULT now()
 );
 
 CREATE INDEX idx_dispute_case_kind_category ON dispute_case (doc_kind, category);
+
+-- 검색 단위 청크 (임베딩은 여기서 관리. chunker.py 가 dispute_case 를 읽어 채움)
+CREATE TABLE case_chunk (
+    id               BIGSERIAL PRIMARY KEY,
+    dispute_case_id  BIGINT NOT NULL REFERENCES dispute_case(id) ON DELETE CASCADE,
+    chunk_type       VARCHAR(30)  NOT NULL CHECK (chunk_type IN ('CASE_BODY','STANDARD_SUMMARY','STANDARD_SECTION','BRIDGE')),
+    chunk_index      INT          NOT NULL DEFAULT 0,
+    heading          VARCHAR(300),
+    content          TEXT         NOT NULL,
+    content_hash     CHAR(64)     NOT NULL,
+    char_count       INT          NOT NULL,
+    embedding        vector(1536),
+    embedding_model  VARCHAR(100),
+    created_at       TIMESTAMP    NOT NULL DEFAULT now(),
+    updated_at       TIMESTAMP    NOT NULL DEFAULT now(),
+    UNIQUE (dispute_case_id, chunk_type, chunk_index)
+);
+CREATE INDEX idx_case_chunk_embedding ON case_chunk USING hnsw (embedding vector_cosine_ops);
+CREATE INDEX idx_case_chunk_content_trgm ON case_chunk USING gin (content gin_trgm_ops);
+
+-- 사례 태그 (상품·쟁점유형·개념·근거·결과 축)
+CREATE TABLE case_tag (
+    id               BIGSERIAL PRIMARY KEY,
+    dispute_case_id  BIGINT NOT NULL REFERENCES dispute_case(id) ON DELETE CASCADE,
+    axis             VARCHAR(30)  NOT NULL CHECK (axis IN ('PRODUCT','ISSUE_TYPE','CONCEPT','BASIS','OUTCOME')),
+    value            VARCHAR(200) NOT NULL,
+    source           VARCHAR(20)  NOT NULL CHECK (source IN ('FSS','LLM','MANUAL')),
+    confidence       NUMERIC(3,2),
+    created_at       TIMESTAMP    NOT NULL DEFAULT now(),
+    UNIQUE (dispute_case_id, axis, value)
+);
+CREATE INDEX idx_case_tag_axis_value ON case_tag (axis, value);
+
+-- 검색 평가용 질의
+CREATE TABLE gold_query (
+    id            BIGSERIAL PRIMARY KEY,
+    query_text    TEXT         NOT NULL,
+    query_source  VARCHAR(300),
+    product_type  VARCHAR(100),
+    note          TEXT,
+    created_at    TIMESTAMP    NOT NULL DEFAULT now()
+);
+
+-- 검색 평가용 정답 (relevance 1: 관련, 2: 매우 관련)
+CREATE TABLE gold_label (
+    id               BIGSERIAL PRIMARY KEY,
+    gold_query_id    BIGINT   NOT NULL REFERENCES gold_query(id) ON DELETE CASCADE,
+    dispute_case_id  BIGINT   NOT NULL REFERENCES dispute_case(id) ON DELETE CASCADE,
+    relevance        SMALLINT NOT NULL CHECK (relevance IN (1,2)),
+    labeled_by       VARCHAR(50),
+    created_at       TIMESTAMP NOT NULL DEFAULT now(),
+    UNIQUE (gold_query_id, dispute_case_id)
+);

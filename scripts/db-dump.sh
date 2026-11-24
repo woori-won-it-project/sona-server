@@ -1,13 +1,15 @@
 #!/usr/bin/env bash
-# Local DB (docker postgres) -> dumps/sona.dump
-# Usage (repo root): ./scripts/db-dump.sh
+# Local DB (docker postgres) -> dump file
+# Usage (repo root):
+#   ./scripts/db-dump.sh                       # dumps/sona_YYYY-MM-DD.dump (today)
+#   ./scripts/db-dump.sh dumps/my.dump         # given path
 set -euo pipefail
 export MSYS_NO_PATHCONV=1  # Git Bash(Windows)에서 /tmp 경로 변환 방지
 
 ROOT="$(cd "$(dirname "$0")/.." && (pwd -W 2>/dev/null || pwd))"  # pwd -W: Git Bash에서 C:/... 형식
 ENV_FILE="$ROOT/.env"
 COMPOSE_FILE="$ROOT/infra/docker-compose.yml"
-OUT_FILE="$ROOT/dumps/sona.dump"
+OUT_FILE="${1:-$ROOT/dumps/sona_$(date +%Y-%m-%d).dump}"
 
 [ -f "$ENV_FILE" ] || { echo ".env not found. Copy .env.example to .env first." >&2; exit 1; }
 env_get() { grep -E "^\s*$1\s*=" "$ENV_FILE" | tail -n1 | cut -d= -f2- | tr -d '\r' | xargs; }
