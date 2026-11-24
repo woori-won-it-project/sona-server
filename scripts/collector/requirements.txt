@@ -3,3 +3,5 @@ beautifulsoup4==4.15.0
 psycopg[binary]==3.3.9
 pyhwp==0.1b15
 six==1.17.0  # pyhwp 런타임 의존성 (pyhwp가 선언하지 않음)
+openai==3.58.0
+tiktoken==0.14.0  # embedder.py --dry-run 토큰 수 계산
