@@ -1,4 +1,4 @@
-"""금감원 분쟁조정사례(CASE) / 분쟁해결기준(STANDARD) 수집기.
+"""금감원 분쟁조정사례(CASE) / 분쟁해결기준(STANDARD) / 분쟁조정결정례(DECISION, 보험) 수집기.
 
 원본(상세 HTML, 모든 첨부)은 data/raw/ 에 빠짐없이 저장하고, 파싱은 최소한만 해서 dispute_case 에 upsert 한다.
 실행마다 crawl_job 한 건을 남긴다.
@@ -8,11 +8,12 @@
     python scripts/collector/collector.py --kind case --keys 128,1,118
     python scripts/collector/collector.py --kind standard --dry-run
     python scripts/collector/collector.py --kind case --reparse      # 네트워크 없이 data/raw 로 재파싱
+    python scripts/collector/collector.py --kind decision --keys 64799 --dry-run   # 결정례 (파싱은 decision.py)
 
 옵션:
     --keys       caseSlno / prcdntSlno 목록 (쉼표 구분). 목록 순서 대신 이 건들만 처리
     --limit N    앞에서 N건만 처리 (시험용)
-    --dry-run    DB 저장 없이 결과 출력
+    --dry-run    DB 저장 없이 결과 출력 (--report 파일로 요약 저장 가능)
     --skip-existing  원본 파일이 이미 있으면 다시 받지 않음
     --reparse    네트워크 요청 없이 data/raw/ 의 HTML·첨부로 재파싱 (DB 갱신)
 
@@ -35,6 +36,7 @@ from urllib.parse import parse_qs, unquote, unquote_plus, urljoin, urlparse
 import requests
 from bs4 import BeautifulSoup
 
+import decision
 import list_scan
 from list_scan import BASE_URL, RAW_DIR, ROOT, SOURCES, clean, fetch
 
@@ -50,6 +52,7 @@ INQUIRY_LINE = re.compile(r"^\s*※\s*문의")         # STANDARD HTML 의 '※ 
 TABLE_PLACEHOLDER = "<표>"                          # hwp5txt 가 표 자리에 남기는 표시
 TEXT_COLUMNS = ["title", "summary", "complaint", "dispute_issue", "decision_reason", "consumer_warning",
                 "raw_text", "category", "product_type"]
+PERSONAL_INFO_KEYS = ("작성자", "담당자", "문의 이메일")
 BLOCK_TAGS = ["p", "div", "li", "tr", "h1", "h2", "h3", "h4", "h5", "h6", "table", "ul", "ol"]
 
 
@@ -148,7 +151,9 @@ def parse_detail(html: str, src: dict) -> dict:
             if file_key in seen or shown in ("", "다운로드"):
                 continue
             seen.add(file_key)
-            m = re.match(r"^(.*?)\s*\[([\d.,]+\s*[KMG]?B)\]$", shown)
+            # CASE/STANDARD: '이름 [82KB]', DECISION: '이름 (파일크기: 82KB)'
+            m = (re.match(r"^(.*?)\s*\[([\d.,]+\s*[KMG]?B)\]$", shown)
+                 or re.match(r"^(.*?)\s*\(파일크기:\s*([\d.,]+\s*[KMG]?B)\)$", shown))
             boxes.append({
                 "box": label,
                 "display_name": m.group(1) if m else shown,
@@ -259,6 +264,9 @@ class Collector:
         self.att_dir = self.raw_dir / "attachments"
         self.session = list_scan.new_session()
         self.hwp5txt = hwp5txt_path(env)
+        # decision.py 가 collector 를 import 하지 않고 쓰도록 넘기는 도구
+        self.run_hwp5txt, self.run_hwp5html, self.normalize_hwp_text = run_hwp5txt, run_hwp5html, normalize_hwp_text
+        self.block_text = block_text
 
     def html_path(self, key: str) -> Path:
         return self.raw_dir / f"{self.src['doc_kind']}_{key}.html"
@@ -334,6 +342,9 @@ class Collector:
                  for a in saved}, ensure_ascii=False, indent=2), encoding="utf-8")
 
         info = dict(detail["info"])
+        if doc_kind == "DECISION":  # 결정례 화면의 작성자·담당자 이름·이메일(개인정보)은 저장하지 않는다
+            for k in PERSONAL_INFO_KEYS:
+                info.pop(k, None)
         category = info.pop("권역", None) or item.get("category")
         registered_at = info.pop("등록일", None) or item.get("registered_at")
         summary = info.pop("요지", None)
@@ -367,7 +378,9 @@ class Collector:
             "registered_at": registered_at,
         }
 
-        if doc_kind == "CASE":
+        if doc_kind == "DECISION":
+            decision.fill(row, detail, attachments, item, notes, self)
+        elif doc_kind == "CASE":
             row["raw_text"] = detail["body_text"] or None
             case_text = detail["body_text"]
             # HTML 본문에 ▣ 구간이 하나도 없으면 상세내용 첨부 hwp 로 다시 나눈다 (예: CASE 38, 145)
@@ -502,12 +515,13 @@ def load_items(kind: str, args) -> list[dict]:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="금감원 분쟁조정 자료 수집기")
-    parser.add_argument("--kind", choices=["case", "standard"], required=True)
-    parser.add_argument("--keys", help="caseSlno / prcdntSlno 목록 (쉼표 구분)")
+    parser.add_argument("--kind", choices=["case", "standard", "decision"], required=True)
+    parser.add_argument("--keys", help="caseSlno / prcdntSlno / nttId 목록 (쉼표 구분)")
     parser.add_argument("--limit", type=int)
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--skip-existing", action="store_true")
     parser.add_argument("--reparse", action="store_true")
+    parser.add_argument("--report", help="처리 결과 요약 JSON 저장 경로 (DECISION 은 섹션·글자 수 요약)")
     args = parser.parse_args()
 
     env = load_env()
@@ -523,22 +537,41 @@ def main() -> None:
             (doc_kind, len(items))).fetchone()[0]
 
     from psycopg.types.json import Jsonb
-    ok, failed, errors = 0, 0, []
+    ok, failed, errors, reported, row_count, skipped = 0, 0, [], [], 0, 0
     for item in items:
         key = item["source_key"]
         try:
             row = collector.collect(item)
+            # DECISION 은 결정서마다 한 행 (한 게시물에 여러 개일 수 있음)
+            rows = decision.split_rows(row) if doc_kind == "DECISION" else [row]
+            if doc_kind == "DECISION" and not rows:  # 본문을 뽑은 결정서 없음 (HWP 3.0·PDF·TIF 뿐) → 저장 안 함
+                skipped += 1
+                if args.report:
+                    reported.append(decision.skipped_view(row))
+                print(f"[{doc_kind} {key}] skipped  {row['meta'].get('parse_notes', [])}")
+                continue
             if args.dry_run:
-                print(json.dumps(row, ensure_ascii=False, indent=2)[:3000])
+                if doc_kind != "DECISION":  # DECISION 은 --report 로 본다
+                    print(json.dumps(row, ensure_ascii=False, indent=2)[:3000])
             else:
-                params = dict(row, crawl_job_id=job_id,
-                              attachments=Jsonb(row["attachments"]), meta=Jsonb(row["meta"]))
-                conn.execute(UPSERT_SQL, params)
+                with conn.transaction():
+                    for r in rows:
+                        params = dict(r, crawl_job_id=job_id,
+                                      attachments=Jsonb(r["attachments"]), meta=Jsonb(r["meta"]))
+                        conn.execute(UPSERT_SQL, params)
             ok += 1
-            print(f"[{doc_kind} {key}] ok  notes={row['meta'].get('parse_notes', [])}")
+            row_count += len(rows)
+            if args.report:
+                reported.extend(decision.report_view(r) if doc_kind == "DECISION" else r for r in rows)
+            for r in rows:
+                print(f"[{doc_kind} {r['source_key']}] ok  notes={r['meta'].get('parse_notes', [])}")
         except Exception as e:  # 한 건 실패가 전체를 멈추지 않도록
             failed += 1
             errors.append(f"{key}: {e}")
+            if args.report and doc_kind == "DECISION":
+                reported.append({"source_key": key, "source_url": item["source_url"], "failed": True,
+                                 "title": item.get("title"), "registered_at": item.get("registered_at"),
+                                 "error": str(e)[:500]})
             print(f"[{doc_kind} {key}] FAILED {e}", file=sys.stderr)
             traceback.print_exc()
 
@@ -546,9 +579,20 @@ def main() -> None:
         conn.execute(
             "UPDATE crawl_job SET status=%s, success_count=%s, fail_count=%s, error_message=%s, finished_at=now() "
             "WHERE id=%s",
-            ("SUCCESS" if failed == 0 else "FAILED", ok, failed, "\n".join(errors) or None, job_id))
+            ("SUCCESS" if failed == 0 else "FAILED", ok, failed,
+             "\n".join(errors + ([f"skipped(저장 안 함) {skipped}건"] if skipped else [])) or None, job_id))
         conn.close()
-    print(f"done: job={job_id} total={len(items)} ok={ok} failed={failed}")
+    if args.report:
+        out = Path(args.report)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        summary = {"doc_kind": doc_kind, "dry_run": args.dry_run, "total": len(items), "ok": ok, "rows": row_count,
+                   "skipped": skipped, "failed": failed, "errors": errors}
+        if doc_kind == "DECISION":
+            summary["site"] = decision.site_summary()
+        out.write_text(json.dumps({**summary, "items": reported},
+                                  ensure_ascii=False, indent=2, default=str), encoding="utf-8")
+        print(f"report: {out}")
+    print(f"done: job={job_id} total={len(items)} ok={ok} skipped={skipped} failed={failed} rows={row_count}")
 
 
 if __name__ == "__main__":
