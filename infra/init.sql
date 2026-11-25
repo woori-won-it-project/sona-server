@@ -18,7 +18,7 @@ CREATE TABLE crawl_job (
 CREATE TABLE dispute_case (
     id               BIGSERIAL PRIMARY KEY,
     crawl_job_id     BIGINT REFERENCES crawl_job(id),
-    doc_kind         VARCHAR(20)  NOT NULL,       -- CASE / STANDARD (추후 DECISION, PRECEDENT)
+    doc_kind         VARCHAR(20)  NOT NULL,       -- CASE / STANDARD / DECISION (추후 PRECEDENT)
     source_url       VARCHAR(500) NOT NULL UNIQUE,
     source_key       VARCHAR(50),                 -- caseSlno / prcdntSlno
     category         VARCHAR(30),                 -- 보험 / 은행·중소서민 / 금융투자
@@ -44,7 +44,8 @@ CREATE INDEX idx_dispute_case_kind_category ON dispute_case (doc_kind, category)
 CREATE TABLE case_chunk (
     id               BIGSERIAL PRIMARY KEY,
     dispute_case_id  BIGINT NOT NULL REFERENCES dispute_case(id) ON DELETE CASCADE,
-    chunk_type       VARCHAR(30)  NOT NULL CHECK (chunk_type IN ('CASE_BODY','STANDARD_SUMMARY','STANDARD_SECTION','BRIDGE')),
+    chunk_type       VARCHAR(30)  NOT NULL CHECK (chunk_type IN ('CASE_BODY','STANDARD_SUMMARY','STANDARD_SECTION','BRIDGE',
+                                                              'DECISION_SUMMARY','DECISION_FACTS','DECISION_JUDGMENT','DECISION_CLAUSE')),
     chunk_index      INT          NOT NULL DEFAULT 0,
     heading          VARCHAR(300),
     content          TEXT         NOT NULL,
