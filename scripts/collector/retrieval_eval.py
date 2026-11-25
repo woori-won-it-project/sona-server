@@ -402,7 +402,25 @@ def main() -> None:
                         help="결정례 섞는 방식 비교 (설정 a·b·d·e·f, 정답 label_sheet_final_v2.csv)")
     parser.add_argument("--mix2", action="store_true",
                         help="종류별 후보 분리 비교 (설정 a·e·f·g·h, 정답 label_sheet_final_v2.csv)")
+    parser.add_argument("--concept", action="store_true",
+                        help="개념 태그 보완 비교 (설정 g·k1·k2·k3, 정답 label_sheet_final_v3.csv)")
+    parser.add_argument("--concept-v3", action="store_true",
+                        help="개념 목록 v3(약관 용어 정의 보완 + 글자 일치) 비교 (설정 g·k2·k2v3)")
+    parser.add_argument("--concept-df", action="store_true",
+                        help="흔한 개념(문서 빈도 5·10·20%% 초과) 제외 비교 (설정 g·k2·k2v3·k2v3_df05/10/20)")
     args = parser.parse_args()
+    if args.concept_df:
+        from retrieval_concept_df import eval_concept_df
+        eval_concept_df()
+        return
+    if args.concept_v3:
+        from retrieval_concept_v3 import eval_concept_v3
+        eval_concept_v3()
+        return
+    if args.concept:
+        from retrieval_mix import eval_concept
+        eval_concept()
+        return
     if args.mix2:
         from retrieval_mix import eval_mix2
         eval_mix2()

@@ -392,3 +392,247 @@ def eval_mix2() -> None:
     if delta_rows:
         from review_input_delta import build_review
         build_review(DELTA3_FILE, REVIEW3_FILE, ["g", "h", "e", "f", "a"])
+
+
+# ---------------------------------------------------------------- 3차: 개념 태그 (--concept)
+#
+#   g)  확정 방식 (종류별 후보 50 분리, CASE·STANDARD 7 + DECISION 3), 개념 태그 없음
+#   k1/k2/k3) 질의 개념(query_concepts.json)과 자료 개념(case_tag CONCEPT/LLM)이 하나라도 겹치는 자료를
+#       그 종류의 후보에 강제로 넣고 자료 점수에 +0.05 / +0.10 / +0.20. 그 뒤 7+3 규칙은 g 와 같음
+#   자료 점수는 g 와 같은 rank_cases 방식: 0.7 × (1 - 자료 최소 거리) + 0.3 × 자료 최대 word_similarity
+
+from retrieval_eval import case_key  # noqa: E402
+
+LABEL_V3 = GOLD_DIR / "label_sheet_final_v3.csv"
+QUERY_CONCEPTS = GOLD_DIR / "query_concepts.json"
+VOCAB_FILE = GOLD_DIR / "concept_vocab.json"
+DELTA4_FILE = GOLD_DIR / "label_delta4.csv"
+REVIEW4_FILE = GOLD_DIR / "review_input_delta4.json"
+REPORT_CONCEPT = RAW_DIR / "_report" / "retrieval_eval_concept.json"
+USAGE_FILE = RAW_DIR / "_report" / "concept_llm_usage.json"
+CONTROLS = ["G10", "G30", "N1", "N2"]  # 사용자 확정 (N3 는 평가 질문)
+BONUS = {"k1": 0.05, "k2": 0.10, "k3": 0.20}
+CONCEPT_DESC = {"g": CONFIG_DESC["g"] + " (개념 태그 없음)",
+                **{k: f"g + 개념 겹치는 자료 강제 포함 + 점수 +{b:.2f}" for k, b in BONUS.items()}}
+
+
+def rank_forced(chunks: list[dict], forced: set[int], bonus: float) -> tuple[list[dict], int]:
+    """rank_cases 와 같은 점수에 후보 강제 포함 + 가점. forced = 개념이 겹치는 dispute_case_id.
+    반환: (순위, 후보 50 청크 밖에서 강제로 들어온 자료 수)."""
+    by_dist = sorted(chunks, key=lambda c: (c["distance"], c["id"]))
+    pool = list(dict.fromkeys(c["dispute_case_id"] for c in by_dist[:CANDIDATE_CHUNKS]))
+    by_case: dict[int, list[dict]] = {}
+    for c in chunks:
+        by_case.setdefault(c["dispute_case_id"], []).append(c)
+    extra = [cid for cid in by_case if cid in forced and cid not in set(pool)]
+    ranked = []
+    for cid in pool + extra:
+        cs = by_case[cid]
+        sim, kw = 1 - min(c["distance"] for c in cs), max(c["keyword"] for c in cs)
+        rep = max(cs, key=lambda c: (W_VEC * (1 - c["distance"]) + W_KW * c["keyword"], -c["id"]))
+        hit = cid in forced
+        ranked.append({"case_key": case_key(cs[0]["doc_kind"], cs[0]["source_key"]), "title": cs[0]["title"],
+                       "score": W_VEC * sim + W_KW * kw + (bonus if hit else 0.0), "vector_sim": sim, "keyword": kw,
+                       "concept_hit": hit, "forced": cid in extra, "_cid": cid, "_tie": rep["id"]})
+    return by_score(ranked), len(extra)
+
+
+def concept_rankings(chunks: list[dict], qid: str, overlap: set[int], fills: dict) -> tuple[dict, dict, dict]:
+    """반환: ({설정: 순위}, {설정: 청크(best_chunk 용)}, {설정: 강제 포함 수})."""
+    cs = [c for c in chunks if c["doc_kind"] in BASE_KINDS]
+    dec = [c for c in chunks if c["doc_kind"] == "DECISION"]
+    base, _ = build_rankings(chunks, qid, {})
+    r, forced_n = {"g": base["g"]}, {"g": 0}
+    for name, bonus in BONUS.items():
+        r_cs, n_cs = rank_forced(cs, overlap, bonus)
+        r_dec, n_dec = rank_forced(dec, overlap, bonus)
+        r[name] = rank_split(by_score(r_cs + r_dec), fills.setdefault(name, []), qid)
+        forced_n[name] = n_cs + n_dec
+    # 자기 점검: 가점 0·강제 없음이면 g 와 같아야 한다
+    r0 = rank_split(by_score(rank_forced(cs, set(), 0.0)[0] + rank_forced(dec, set(), 0.0)[0]), [], qid)
+    assert [x["case_key"] for x in r0] == [x["case_key"] for x in base["g"]], f"{qid}: k(0) != g"
+    return r, {n: chunks for n in r}, forced_n
+
+
+def load_concepts() -> tuple[dict[str, set[str]], dict[int, set[str]], dict[int, str]]:
+    q = json.loads(QUERY_CONCEPTS.read_text(encoding="utf-8"))["queries"]
+    query = {qid: {c["name"] for c in cs} for qid, cs in q.items()}
+    conn = connect(load_env())
+    conn.execute("SET default_transaction_read_only = on")
+    docs: dict[int, set[str]] = {}
+    for cid, value in conn.execute("SELECT dispute_case_id, value FROM case_tag WHERE axis = 'CONCEPT' AND source = 'LLM'"):
+        docs.setdefault(cid, set()).add(value)
+    keys = {cid: case_key(k, s) for cid, k, s in conn.execute(
+        "SELECT id, doc_kind, source_key FROM dispute_case WHERE category = %s", (CATEGORY,))}
+    conn.close()
+    return query, docs, keys
+
+
+def tag_stats() -> dict:
+    conn = connect(load_env())
+    conn.execute("SET default_transaction_read_only = on")
+    rows = conn.execute("""
+        SELECT d.doc_kind, count(t.id) FROM dispute_case d
+        LEFT JOIN case_tag t ON t.dispute_case_id = d.id AND t.axis = 'CONCEPT' AND t.source = 'LLM'
+        WHERE d.category = %s AND coalesce(d.meta->>'disposition', '') <> '각하'
+        GROUP BY d.id, d.doc_kind""", (CATEGORY,)).fetchall()
+    by_value = conn.execute("""SELECT value, count(*) FROM case_tag WHERE axis = 'CONCEPT' AND source = 'LLM'
+                               GROUP BY 1 ORDER BY 2 DESC, 1""").fetchall()
+    conf = [float(r[0]) for r in conn.execute(
+        "SELECT confidence FROM case_tag WHERE axis = 'CONCEPT' AND source = 'LLM'")]
+    conn.close()
+    dist: dict[str, dict[int, int]] = {}
+    for kind, n in rows:
+        dist.setdefault(kind, {}).setdefault(n, 0)
+        dist[kind][n] += 1
+    total = {}
+    for d in dist.values():
+        for n, c in d.items():
+            total[n] = total.get(n, 0) + c
+    return {"documents": len(rows), "tags": sum(n for _, n in rows),
+            "tags_per_document": dict(sorted(total.items())),
+            "tags_per_document_by_kind": {k: dict(sorted(v.items())) for k, v in dist.items()},
+            "documents_without_tags": total.get(0, 0),
+            "confidence": {"min": min(conf), "median": sorted(conf)[len(conf) // 2], "max": max(conf)} if conf else None,
+            "by_concept": [{"concept": v, "documents": n} for v, n in by_value]}
+
+
+def eval_concept() -> None:
+    names = ["g", "k1", "k2", "k3"]
+    queries, gold = load_inputs(LABEL_V3)
+    labeled = load_labeled_keys(LABEL_V3)
+    eval_ids = [q["id"] for q in queries if q["id"] not in CONTROLS]
+    no_gold = [q for q in eval_ids if not gold.get(q)]
+    if no_gold:
+        raise SystemExit(f"정답 없는 평가 질문: {no_gold}")
+    control_ids = list(CONTROLS)
+    qconcepts, dconcepts, keys = load_concepts()
+    vocab = json.loads(VOCAB_FILE.read_text(encoding="utf-8"))
+
+    chunks, tokens, key = score_all(queries)
+    fills: dict[str, list[str]] = {}
+    rankings: dict[str, dict[str, list[dict]]] = {n: {} for n in names}
+    per_query_concept = {}
+    for q in queries:
+        qid = q["id"]
+        overlap = {cid for cid, cs in dconcepts.items() if cs & qconcepts.get(qid, set())}
+        r, _, forced_n = concept_rankings(chunks[qid], qid, overlap, fills)
+        for n in names:
+            rankings[n][qid] = r[n]
+        per_query_concept[qid] = {
+            "query_concepts": sorted(qconcepts.get(qid, set())),
+            "overlap_documents": len(overlap),
+            "overlap_relevant": sorted(keys[c] for c in overlap if c in keys and gold.get(qid, {}).get(keys[c])),
+            "forced_into_pool": forced_n,
+            "concept_hits_in_top10": {n: sum(1 for x in r[n][:TOP_K] if x.get("concept_hit")) for n in names},
+        }
+
+    results = []
+    for n in names:
+        rk = rankings[n]
+        res = evaluate(f"{n}) {CONCEPT_DESC[n]}", CONCEPT_DESC[n], rk, gold, control_ids)
+        unl = {q: [x["case_key"] for x in rk[q][:TOP_K] if x["case_key"] not in labeled.get(q, set())] for q in rk}
+        dec = {q: [x["case_key"] for x in rk[q][:TOP_K] if is_decision(x)] for q in rk}
+        res["summary"].update({
+            "decision_in_top10_eval": sum(len(dec[q]) for q in eval_ids),
+            "relevant_decision_in_top10_eval": sum(1 for q in eval_ids for k in dec[q] if gold[q].get(k)),
+            "unlabeled_in_top10_eval": sum(len(unl[q]) for q in eval_ids),
+            "unlabeled_in_top10_control": sum(len(unl[q]) for q in control_ids),
+            "control_top1": {q: res["controls"][q]["top1_score"] for q in control_ids},
+        })
+        res["unlabeled_top10"] = {q: v for q, v in unl.items() if v}
+        for q in control_ids:
+            res["controls"][q]["top10"] = [{"rank": i, "case_key": x["case_key"], "title": x["title"],
+                                            "score": round(x["score"], 4), "concept_hit": x.get("concept_hit", False)}
+                                           for i, x in enumerate(rk[q][:TOP_K], 1)]
+        results.append(res)
+    first_rank = {q: {n: res["first_relevant_rank"][q] for n, res in zip(names, results)} for q in eval_ids}
+
+    qmap = {q["id"]: q for q in queries}
+    qorder = [q["id"] for q in queries]
+    delta: dict[tuple[str, str], dict] = {}
+    for n in names:
+        for qid, ranked in rankings[n].items():
+            for i, x in enumerate(ranked[:TOP_K], 1):
+                if x["case_key"] not in labeled.get(qid, set()):
+                    delta.setdefault((qid, x["case_key"]), {"title": x["title"], "ranks": {}})["ranks"][n] = i
+    delta_rows = []
+    for (qid, k), d in sorted(delta.items(), key=lambda kv: (qorder.index(kv[0][0]), min(kv[1]["ranks"].values()),
+                                                              kv[0][1])):
+        best = lambda ns: min((d["ranks"][n] for n in ns if n in d["ranks"]), default="")  # noqa: E731
+        delta_rows.append({"query_id": qid, "clause_ref": qmap[qid].get("clause_ref", ""), "case_key": k,
+                           "title": d["title"], "rank_A": d["ranks"].get("g", ""), "rank_B": best(("k1", "k2")),
+                           "rank_C": d["ranks"].get("k3", ""),
+                           "is_hint": 1 if k in (qmap[qid].get("hint_cases") or []) else 0, "relevance": "",
+                           "_ranks": d["ranks"]})
+    if delta_rows:
+        with DELTA4_FILE.open("w", encoding="utf-8-sig", newline="") as f:
+            w = csv.DictWriter(f, fieldnames=LABEL_COLUMNS, extrasaction="ignore")
+            w.writeheader()
+            w.writerows(delta_rows)
+
+    usage = json.loads(USAGE_FILE.read_text(encoding="utf-8"))["runs"] if USAGE_FILE.exists() else []
+    llm_total = {k: sum(r.get(k) or 0 for r in usage) for k in ("calls", "prompt_tokens", "completion_tokens", "cost_usd")}
+    llm_total["cost_usd"] = round(llm_total["cost_usd"], 6)
+    keys_sum = ("recall@5", "recall@10", "mrr@10", "ndcg@10", "no_hit@10", "decision_in_top10_eval",
+                "relevant_decision_in_top10_eval", "unlabeled_in_top10_eval", "unlabeled_in_top10_control",
+                "control_top1_mean", "eval_top1_mean")
+    emb_cost = cost(tokens, DEFAULT_MODEL)
+    report = {
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "label_file": str(LABEL_V3.relative_to(RAW_DIR.parent.parent)),
+        "category": CATEGORY, "top_k": TOP_K, "candidate_chunks_per_kind": CANDIDATE_CHUNKS,
+        "weights": {"vector": W_VEC, "keyword": W_KW}, "excluded_chunk_type": "DECISION_CLAUSE",
+        "configs": CONCEPT_DESC, "bonus": BONUS,
+        "eval_queries": eval_ids, "control_queries": control_ids,
+        "concept_vocab": {"file": str(VOCAB_FILE.relative_to(RAW_DIR.parent.parent)), "count": vocab["count"],
+                          "count_by_attempt": vocab.get("count_by_attempt"), "prompt_version": vocab.get("prompt_version"),
+                          "supplement_added": (vocab.get("supplement") or {}).get("added"), "model": vocab["model"],
+                          "names": [c["name"] for c in vocab["concepts"]]},
+        "document_tags": tag_stats(),
+        "query_concepts": {q: sorted(v) for q, v in qconcepts.items()},
+        "queries_without_concepts": [q for q in qorder if not qconcepts.get(q)],
+        "per_query_concept": per_query_concept,
+        "llm_usage": {"runs": usage, "total": llm_total,
+                      "note": "첫 개념 목록 시도 1회(83개, 범위 밖이라 저장 안 함)는 사용량 기록 전 코드라 토큰 미기록"},
+        "embedding_usage": {"query_tokens": tokens, "cost_usd": emb_cost},
+        "notes": [
+            "라벨 없는 자료(v3 정답표에 없는 자료)는 오답으로 계산",
+            "자료 점수는 g 확정 실험과 같은 rank_cases 방식: 0.7×(자료 안 최대 벡터 유사도) + 0.3×(자료 안 최대 키워드) "
+            "— '청크 점수(0.7×벡터+0.3×키워드)의 최고점'과는 다를 수 있음 (같은 청크가 아닐 수 있음)",
+            "k 의 가점은 개념이 하나라도 겹치면 한 번만 (겹친 개념 수와 무관)",
+            "label_delta4: rank_A=g, rank_B=k1·k2 중 좋은 순위, rank_C=k3 (설정별 순위는 label_delta4.items)",
+        ],
+        "summary_table": [{"config": r["name"], **{k: r["summary"][k] for k in keys_sum}} for r in results],
+        "focus_first_relevant_rank": {q: first_rank.get(q) for q in FOCUS},
+        "first_relevant_rank": first_rank,
+        "split_fills": fills,
+        "label_delta4": {"file": str(DELTA4_FILE.relative_to(RAW_DIR.parent.parent)) if delta_rows else None,
+                         "rows": len(delta_rows),
+                         "items": [{k: v for k, v in r.items() if k in ("query_id", "case_key", "title", "_ranks")}
+                                   for r in delta_rows]},
+        "results": results,
+    }
+    text = json.dumps(report, ensure_ascii=False, indent=2)
+    assert key not in text
+    REPORT_CONCEPT.write_text(text, encoding="utf-8")
+
+    print(f"{'설정':<5}{'R@5':>7}{'R@10':>7}{'MRR':>7}{'nDCG':>7}{'무적중':>5}{'D수':>5}{'D정답':>5}{'무라벨':>5}"
+          f"{'대조1위':>8}{'평가1위':>8}")
+    for r in results:
+        s = r["summary"]
+        print(f"{r['name'].split(')')[0]:<5}{s['recall@5']:>7.3f}{s['recall@10']:>7.3f}{s['mrr@10']:>7.3f}"
+              f"{s['ndcg@10']:>7.3f}{s['no_hit@10']:>5}{s['decision_in_top10_eval']:>5}"
+              f"{s['relevant_decision_in_top10_eval']:>5}{s['unlabeled_in_top10_eval']:>5}"
+              f"{s['control_top1_mean']:>8.3f}{s['eval_top1_mean']:>8.3f}")
+    print("\n첫 정답 순위:", json.dumps(report["focus_first_relevant_rank"], ensure_ascii=False))
+    print(f"label_delta4 {len(delta_rows)}행 | LLM 누적 {llm_total} | 질의 임베딩 {tokens:,} 토큰")
+
+    if delta_rows:
+        from review_input_delta import build_review
+
+        def ranker(qid: str, cs: list[dict]):
+            overlap = {cid for cid, c in dconcepts.items() if c & qconcepts.get(qid, set())}
+            r, pools, _ = concept_rankings(cs, qid, overlap, {})
+            return r, pools
+        build_review(DELTA4_FILE, REVIEW4_FILE, ["k1", "k2", "k3", "g"], ranker=ranker, label_name=LABEL_V3.name)
