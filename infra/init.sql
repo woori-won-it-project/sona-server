@@ -1,23 +1,9 @@
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 CREATE EXTENSION IF NOT EXISTS vector;
 
--- 수집 작업 이력
-CREATE TABLE crawl_job (
-    id            BIGSERIAL PRIMARY KEY,
-    source        VARCHAR(30)  NOT NULL,          -- CASE / STANDARD
-    status        VARCHAR(20)  NOT NULL,          -- RUNNING / SUCCESS / FAILED
-    total_count   INT          NOT NULL DEFAULT 0,
-    success_count INT          NOT NULL DEFAULT 0,
-    fail_count    INT          NOT NULL DEFAULT 0,
-    error_message TEXT,
-    started_at    TIMESTAMP    NOT NULL DEFAULT now(),
-    finished_at   TIMESTAMP
-);
-
--- 분쟁조정 자료 (사례 + 해결기준을 한 테이블에, doc_kind로 구분)
+-- 분쟁조정 자료 (사례 + 해결기준 + 결정례를 한 테이블에, doc_kind로 구분). 수집 이력은 data/raw/_report 리포트 JSON 으로 남긴다
 CREATE TABLE dispute_case (
     id               BIGSERIAL PRIMARY KEY,
-    crawl_job_id     BIGINT REFERENCES crawl_job(id),
     doc_kind         VARCHAR(20)  NOT NULL,       -- CASE / STANDARD / DECISION (추후 PRECEDENT)
     source_url       VARCHAR(500) NOT NULL UNIQUE,
     source_key       VARCHAR(50),                 -- caseSlno / prcdntSlno
@@ -66,30 +52,10 @@ CREATE TABLE case_tag (
     dispute_case_id  BIGINT NOT NULL REFERENCES dispute_case(id) ON DELETE CASCADE,
     axis             VARCHAR(30)  NOT NULL CHECK (axis IN ('PRODUCT','ISSUE_TYPE','CONCEPT','BASIS','OUTCOME')),
     value            VARCHAR(200) NOT NULL,
-    source           VARCHAR(20)  NOT NULL CHECK (source IN ('FSS','LLM','MANUAL')),
+    source           VARCHAR(20)  NOT NULL CHECK (source IN ('FSS','LLM','MANUAL','RULE')),  -- RULE: 동의어 글자 일치 같은 규칙
     confidence       NUMERIC(3,2),
     created_at       TIMESTAMP    NOT NULL DEFAULT now(),
     UNIQUE (dispute_case_id, axis, value)
 );
 CREATE INDEX idx_case_tag_axis_value ON case_tag (axis, value);
 
--- 검색 평가용 질의
-CREATE TABLE gold_query (
-    id            BIGSERIAL PRIMARY KEY,
-    query_text    TEXT         NOT NULL,
-    query_source  VARCHAR(300),
-    product_type  VARCHAR(100),
-    note          TEXT,
-    created_at    TIMESTAMP    NOT NULL DEFAULT now()
-);
-
--- 검색 평가용 정답 (relevance 1: 관련, 2: 매우 관련)
-CREATE TABLE gold_label (
-    id               BIGSERIAL PRIMARY KEY,
-    gold_query_id    BIGINT   NOT NULL REFERENCES gold_query(id) ON DELETE CASCADE,
-    dispute_case_id  BIGINT   NOT NULL REFERENCES dispute_case(id) ON DELETE CASCADE,
-    relevance        SMALLINT NOT NULL CHECK (relevance IN (1,2)),
-    labeled_by       VARCHAR(50),
-    created_at       TIMESTAMP NOT NULL DEFAULT now(),
-    UNIQUE (gold_query_id, dispute_case_id)
-);
