@@ -1,9 +1,10 @@
-"""금감원 분쟁조정 목록 페이지만 훑어서 data/raw/list_{case|standard}.json 으로 저장한다.
+"""금감원 분쟁조정 목록 페이지만 훑어서 data/raw/list_{case|standard|decision}.json 으로 저장한다.
 
 상세페이지·첨부는 열지 않는다. 샘플 선정과 전체 수집의 목록 단계에서 쓴다.
 
 사용 (레포 루트에서):
-    python scripts/collector/list_scan.py --kind all
+    python scripts/collector/list_scan.py --kind all        # case + standard
+    python scripts/collector/list_scan.py --kind decision   # 분쟁조정결정례 (보험 탭만)
 """
 import argparse
 import json
@@ -37,6 +38,14 @@ SOURCES = {
         "list_path": "/fss/job/fncCnflPrcdnt/list.do",
         "menu_no": "201194",
         "key_param": "prcdntSlno",
+    },
+    # 분쟁조정결정례: 게시판형(bbs). 상세 키는 nttId, 권역 탭 cl1Cd (A=은행ㆍ중소서민 B=보험 C=금융투자)
+    "decision": {
+        "doc_kind": "DECISION",
+        "list_path": "/fss/bbs/B0000390/list.do",
+        "menu_no": "201193",
+        "key_param": "nttId",
+        "list_params": {"cl1Cd": "B"},
     },
 }
 
@@ -130,6 +139,9 @@ def parse_page(html: str, src: dict) -> tuple[list[dict], int | None, int | None
         if src["doc_kind"] == "CASE":
             item["attachments_detail"] = parse_attachments(cell["상세내용"])
             item["attachments_cardnews"] = parse_attachments(cell["카드뉴스"])
+        elif src["doc_kind"] == "DECISION":
+            item["department"] = clean(cell["담당부서"].get_text()) or None
+            item["attachments"] = parse_attachments(cell["첨부파일"])
         else:
             item["summary"] = clean(cell["요지"].get_text()) or None
             item["attachments"] = parse_attachments(cell["첨부"])
@@ -149,7 +161,7 @@ def scan(kind: str, session: requests.Session) -> Path:
     items, total, last_page = [], None, None
     page = 1
     while True:
-        html = fetch(session, url, {"menuNo": src["menu_no"], "pageIndex": page})
+        html = fetch(session, url, {"menuNo": src["menu_no"], "pageIndex": page, **src.get("list_params", {})})
         rows, page_total, page_last = parse_page(html, src)
         total = total or page_total
         last_page = last_page or page_last
@@ -164,7 +176,7 @@ def scan(kind: str, session: requests.Session) -> Path:
     keys = [i["source_key"] for i in items]
     result = {
         "doc_kind": src["doc_kind"],
-        "list_url": f"{url}?menuNo={src['menu_no']}",
+        "list_url": f"{url}?menuNo={src['menu_no']}" + "".join(f"&{k}={v}" for k, v in src.get("list_params", {}).items()),
         "scanned_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "site_total": total,
         "page_count": last_page,
@@ -181,7 +193,7 @@ def scan(kind: str, session: requests.Session) -> Path:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="금감원 분쟁조정 목록 스캔 (상세·첨부 미요청)")
-    parser.add_argument("--kind", choices=["case", "standard", "all"], default="all")
+    parser.add_argument("--kind", choices=["case", "standard", "decision", "all"], default="all")
     args = parser.parse_args()
 
     session = new_session()

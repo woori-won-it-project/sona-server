@@ -1,4 +1,4 @@
-"""정답셋(gold_label) 라벨링용 후보표 만들기. DB 는 읽기만 한다.
+"""정답셋 라벨링용 후보표 만들기 (정답은 DB 가 아니라 data/raw/_gold/label_sheet_*.csv). DB 는 읽기만 한다.
 
 입력: data/raw/_gold/gold_queries.json  ({"queries": [{id, clause_ref, query_text, hint_cases, ...}]})
 처리: query_text 를 embedder.py 와 같은 모델로 임베딩 → search_probe.py 의 A / B / C 방식으로 사례 상위 10개씩

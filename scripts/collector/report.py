@@ -32,12 +32,10 @@ def length_stats(values: list[str | None]) -> dict:
 
 def main() -> None:
     conn = connect(load_env())
-    cur = conn.execute("SELECT * FROM dispute_case ORDER BY doc_kind, source_key::int")
+    # DECISION 의 source_key 는 '64812-1' 꼴이 있어 앞 번호로 정렬
+    cur = conn.execute("SELECT * FROM dispute_case ORDER BY doc_kind, split_part(source_key, '-', 1)::int, source_key")
     cols = [d.name for d in cur.description]
     rows = [dict(zip(cols, r)) for r in cur.fetchall()]
-    jobs_cur = conn.execute("SELECT * FROM crawl_job ORDER BY id")
-    job_cols = [d.name for d in jobs_cur.description]
-    jobs = [dict(zip(job_cols, r)) for r in jobs_cur.fetchall()]
 
     case = [r for r in rows if r["doc_kind"] == "CASE"]
     std = [r for r in rows if r["doc_kind"] == "STANDARD"]
@@ -111,7 +109,6 @@ def main() -> None:
     report = {
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "total_rows": len(rows),
-        "crawl_jobs": jobs,
         "counts": counts,
         "case_section_null": case_null,
         "standard_raw_text_null_or_short": {"threshold": SHORT_RAW_TEXT, "count": len(std_short), "items": std_short},

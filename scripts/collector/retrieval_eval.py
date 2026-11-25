@@ -23,8 +23,23 @@ LLM 확장
     (질문 id, 조항 원문, 모델, 프롬프트 버전)이 같으면 다시 부르지 않는다.
     모델: 환경 변수 LLM_MODEL, 없으면 이 키로 쓸 수 있는 'gpt-<버전>-mini' 중 가장 최신.
 
+검색 대상
+    기본 실행은 CASE·STANDARD 청크만 쓴다 (DECISION 청크가 DB 에 들어온 뒤에도 이전 결과와 같은 조건).
+
+결정례 평가 (--decision, LLM 확장 없음, 질문 임베딩만 호출)
+    사례 키: CASE 'C'+key, STANDARD 'S'+key, DECISION 'D'+source_key (예: D64579, D64812-1)
+    설정 3개, 모두 C 0.7/0.3 · category='보험' · 사례 단위 상위 10. 청크를 거른 뒤 같은 순위 방식(벡터 상위 50 청크 후보)
+        a) CASE + STANDARD
+        b) + DECISION (DECISION_CLAUSE 청크 제외)
+        c) + DECISION (DECISION_CLAUSE 포함)
+    라벨 없는 사례(그 질문의 정답표에 없는 사례)는 오답으로 계산하고, 설정별로 상위 10 중 라벨 없는 사례 수를 따로 기록.
+    b·c 상위 10 의 라벨 없는 사례는 data/raw/_gold/label_delta.csv (label_sheet_final.csv 와 같은 컬럼.
+    rank_B = 설정 b 순위, rank_C = 설정 c 순위, rank_A 빈칸, relevance 빈칸, (질문, 사례) 중복 제거)
+    결과: data/raw/_report/retrieval_eval_decision.json
+
 사용 (레포 루트에서):
     python scripts/collector/retrieval_eval.py
+    python scripts/collector/retrieval_eval.py --decision
 결과: data/raw/_report/retrieval_eval.json (키 값은 넣지 않음). 터미널에는 지표 요약 표만.
 """
 import argparse
@@ -45,11 +60,20 @@ QUERIES_FILE = GOLD_DIR / "gold_queries.json"
 LABEL_FILE = GOLD_DIR / "label_sheet_final.csv"
 CACHE_FILE = GOLD_DIR / "expansions.json"
 REPORT_FILE = RAW_DIR / "_report" / "retrieval_eval.json"
+DECISION_REPORT_FILE = RAW_DIR / "_report" / "retrieval_eval_decision.json"
+DELTA_FILE = GOLD_DIR / "label_delta.csv"
+LABEL_COLUMNS = ["query_id", "clause_ref", "case_key", "title", "rank_A", "rank_B", "rank_C", "is_hint", "relevance"]
+BASE_KINDS = ("CASE", "STANDARD")
+DECISION_CONFIGS = [  # (이름, 설명, 청크 거르기)
+    ("a", "CASE + STANDARD", lambda c: c["doc_kind"] in BASE_KINDS),
+    ("b", "+ DECISION (DECISION_CLAUSE 제외)", lambda c: c["chunk_type"] != "DECISION_CLAUSE"),
+    ("c", "+ DECISION (DECISION_CLAUSE 포함)", lambda c: True),
+]
 
 TOP_K = 10
 WEIGHTS = [(1.0, 0.0), (0.8, 0.2), (0.7, 0.3), (0.6, 0.4), (0.5, 0.5)]
 EXPANSION_WEIGHT = (0.7, 0.3)
-PREFIX = {"CASE": "C", "STANDARD": "S"}
+PREFIX = {"CASE": "C", "STANDARD": "S", "DECISION": "D"}
 
 # USD / 1M 토큰 (input, output). OpenAI 공개 단가, 없으면 비용은 null
 LLM_PRICES = {
@@ -81,10 +105,10 @@ def case_key(doc_kind: str, source_key: str) -> str:
 
 # ---------------------------------------------------------------- 입력
 
-def load_inputs():
+def load_inputs(label_file=LABEL_FILE):
     queries = json.loads(QUERIES_FILE.read_text(encoding="utf-8"))["queries"]
     gold: dict[str, dict[str, int]] = {q["id"]: {} for q in queries}
-    with LABEL_FILE.open(encoding="utf-8-sig", newline="") as f:
+    with label_file.open(encoding="utf-8-sig", newline="") as f:
         for row in csv.DictReader(f):
             rel = int(row["relevance"]) if row["relevance"].strip() else 0
             if rel > 0:
@@ -238,10 +262,176 @@ def evaluate(name: str, desc: str, rankings: dict[str, list[dict]], gold: dict, 
     }
 
 
+# ---------------------------------------------------------------- 결정례 평가 (--decision)
+
+def load_labeled_keys(label_file=LABEL_FILE) -> dict[str, set[str]]:
+    """질문별로 정답표에 있는 사례 키 (relevance 0 포함 = 라벨이 매겨진 사례)."""
+    labeled: dict[str, set[str]] = {}
+    with label_file.open(encoding="utf-8-sig", newline="") as f:
+        for row in csv.DictReader(f):
+            labeled.setdefault(row["query_id"], set()).add(row["case_key"])
+    return labeled
+
+
+def eval_decision() -> None:
+    import openai
+
+    queries, gold = load_inputs()
+    labeled = load_labeled_keys()
+    eval_ids = [q["id"] for q in queries if gold.get(q["id"])]
+    control_ids = [q["id"] for q in queries if not gold.get(q["id"])]
+    w_vec, w_kw = EXPANSION_WEIGHT  # C 0.7 / 0.3
+
+    key = openai_key()
+    if not key:
+        raise SystemExit("OPENAI_API_KEY 가 .env 와 환경 변수에 없습니다")
+    mask = masker(key)
+    client = openai.OpenAI(api_key=key, max_retries=3, timeout=120)
+    try:
+        vecs, emb_tokens = embed_texts(client, [q["query_text"] for q in queries])
+    except openai.APIError as e:
+        raise SystemExit(mask(f"API 실패: {type(e).__name__} {getattr(e, 'status_code', '')}")) from None
+
+    conn = connect(load_env())
+    conn.execute("SET default_transaction_read_only = on")  # DB 쓰기 금지
+    chunks = {q["id"]: score_chunks(conn, q["query_text"], v) for q, v in zip(queries, vecs)}
+    pool = dict(conn.execute("""SELECT chunk_type, count(*) FROM case_chunk c JOIN dispute_case d ON d.id = c.dispute_case_id
+                                WHERE d.category = %s AND c.embedding IS NOT NULL GROUP BY 1 ORDER BY 1""",
+                             (CATEGORY,)).fetchall())
+    conn.close()
+
+    results, rankings_by_config = [], {}
+    for name, desc, keep in DECISION_CONFIGS:
+        rankings = {qid: rank_cases([c for c in ch if keep(c)], w_vec, w_kw) for qid, ch in chunks.items()}
+        rankings_by_config[name] = rankings
+        r = evaluate(f"{name}) C {w_vec}/{w_kw}", desc, rankings, gold, control_ids)
+        unl = {qid: [x["case_key"] for x in rankings[qid][:TOP_K] if x["case_key"] not in labeled.get(qid, set())]
+               for qid in rankings}
+        dec = {qid: [x["case_key"] for x in rankings[qid][:TOP_K] if x["case_key"].startswith("D")] for qid in rankings}
+        r["summary"].update({
+            "unlabeled_in_top10_eval": sum(len(unl[q]) for q in eval_ids),
+            "unlabeled_in_top10_eval_mean": round(sum(len(unl[q]) for q in eval_ids) / len(eval_ids), 2),
+            "unlabeled_in_top10_control": sum(len(unl[q]) for q in control_ids),
+            "decision_in_top10_eval": sum(len(dec[q]) for q in eval_ids),
+            "control_top1": {q: r["controls"][q]["top1_score"] for q in control_ids},
+        })
+        r["unlabeled_top10"] = {q: v for q, v in unl.items() if v}
+        r["decision_top10"] = {q: v for q, v in dec.items() if v}
+        for q in control_ids:
+            r["controls"][q]["top10"] = [{"rank": i, "case_key": x["case_key"], "title": x["title"],
+                                          "score": round(x["score"], 4)}
+                                         for i, x in enumerate(rankings[q][:TOP_K], 1)]
+        results.append(r)
+
+    # 질문별 첫 정답 순위 비교표
+    first_rank = {q: {r["name"][0]: r["first_relevant_rank"][q] for r in results} for q in eval_ids}
+    changed = {q: v for q, v in first_rank.items() if len(set(v.values())) > 1}
+
+    # label_delta.csv: b·c 상위 10 의 라벨 없는 사례 (질문·사례 중복 제거)
+    qmap = {q["id"]: q for q in queries}
+    delta: dict[tuple[str, str], dict] = {}
+    for name, col in (("b", "rank_B"), ("c", "rank_C")):
+        for qid, ranked in rankings_by_config[name].items():
+            for i, x in enumerate(ranked[:TOP_K], 1):
+                if x["case_key"] in labeled.get(qid, set()):
+                    continue
+                row = delta.setdefault((qid, x["case_key"]), {
+                    "query_id": qid, "clause_ref": qmap[qid].get("clause_ref", ""), "case_key": x["case_key"],
+                    "title": x["title"], "rank_A": "", "rank_B": "", "rank_C": "",
+                    "is_hint": 1 if x["case_key"] in (qmap[qid].get("hint_cases") or []) else 0, "relevance": ""})
+                row[col] = i
+    order = {q["id"]: n for n, q in enumerate(queries)}
+    delta_rows = sorted(delta.values(), key=lambda r: (order[r["query_id"]], min(
+        v for v in (r["rank_B"], r["rank_C"]) if v != ""), r["case_key"]))
+    with DELTA_FILE.open("w", encoding="utf-8-sig", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=LABEL_COLUMNS)
+        w.writeheader()
+        w.writerows(delta_rows)
+
+    emb_cost = cost(emb_tokens, DEFAULT_MODEL)
+    report = {
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "label_file": str(LABEL_FILE.relative_to(RAW_DIR.parent.parent)),
+        "category": CATEGORY, "top_k": TOP_K, "candidate_chunks": CANDIDATE_CHUNKS,
+        "weights": {"vector": w_vec, "keyword": w_kw}, "embedding_model": DEFAULT_MODEL,
+        "chunk_pool": pool,
+        "configs": {n: d for n, d, _ in DECISION_CONFIGS},
+        "eval_queries": eval_ids, "control_queries": control_ids,
+        "usage": {"embedding_tokens": emb_tokens, "embedding_cost_usd": emb_cost},
+        "notes": [
+            "라벨 없는 사례(그 질문의 정답표에 없는 사례)는 오답으로 계산. 결정례(D)는 아직 라벨이 하나도 없으므로 "
+            "b·c 의 지표는 결정례가 정답이어도 오르지 않고, 결정례가 상위로 올라와 정답 C·S 를 밀어내면 내려간다 (하한 추정치)",
+            "후보는 설정별로 거른 청크 중 벡터 상위 50 청크에 든 사례",
+            f"label_delta.csv: b·c 상위 10 의 라벨 없는 사례 {len(delta_rows)}행 (평가·대조군 질문 모두). "
+            "rank_B=설정 b 순위, rank_C=설정 c 순위, rank_A 는 비움",
+        ],
+        "summary_table": [{"config": r["name"], **{k: r["summary"][k] for k in (
+            "recall@5", "recall@10", "mrr@10", "ndcg@10", "no_hit@10", "unlabeled_in_top10_eval",
+            "unlabeled_in_top10_eval_mean", "decision_in_top10_eval", "control_top1_mean", "eval_top1_mean")}}
+            for r in results],
+        "first_relevant_rank": first_rank,
+        "first_relevant_rank_changed": changed,
+        "label_delta": {"file": str(DELTA_FILE.relative_to(RAW_DIR.parent.parent)), "rows": len(delta_rows),
+                        "by_prefix": {p: sum(1 for r in delta_rows if r["case_key"].startswith(p)) for p in "CSD"}},
+        "results": results,
+    }
+    text = json.dumps(report, ensure_ascii=False, indent=2)
+    assert key not in text
+    DECISION_REPORT_FILE.parent.mkdir(parents=True, exist_ok=True)
+    DECISION_REPORT_FILE.write_text(text, encoding="utf-8")
+
+    header = (f"{'설정':<44}{'R@5':>7}{'R@10':>7}{'MRR':>7}{'nDCG':>7}{'무적중':>6}{'무라벨':>6}{'D수':>5}"
+              f"{'대조1위':>8}{'평가1위':>8}")
+    print(header)
+    print("-" * len(header))
+    for r in results:
+        s = r["summary"]
+        print(f"{r['name'] + ' ' + r['description']:<44}{s['recall@5']:>7.3f}{s['recall@10']:>7.3f}{s['mrr@10']:>7.3f}"
+              f"{s['ndcg@10']:>7.3f}{s['no_hit@10']:>6}{s['unlabeled_in_top10_eval']:>6}{s['decision_in_top10_eval']:>5}"
+              f"{s['control_top1_mean']:>8.3f}{s['eval_top1_mean']:>8.3f}")
+    print(f"\n첫 정답 순위가 바뀐 질문 {len(changed)}개 | label_delta {len(delta_rows)}행 | "
+          f"토큰 {emb_tokens:,} | 비용 ${emb_cost:.6f}")
+
+
 # ---------------------------------------------------------------- main
 
 def main() -> None:
-    argparse.ArgumentParser(description="검색 방식 평가 (DB 읽기 전용)").parse_args()
+    parser = argparse.ArgumentParser(description="검색 방식 평가 (DB 읽기 전용)")
+    parser.add_argument("--decision", action="store_true", help="결정례 추가 효과 평가 (설정 a·b·c)")
+    parser.add_argument("--mix", action="store_true",
+                        help="결정례 섞는 방식 비교 (설정 a·b·d·e·f, 정답 label_sheet_final_v2.csv)")
+    parser.add_argument("--mix2", action="store_true",
+                        help="종류별 후보 분리 비교 (설정 a·e·f·g·h, 정답 label_sheet_final_v2.csv)")
+    parser.add_argument("--concept", action="store_true",
+                        help="개념 태그 보완 비교 (설정 g·k1·k2·k3, 정답 label_sheet_final_v3.csv)")
+    parser.add_argument("--concept-v3", action="store_true",
+                        help="개념 목록 v3(약관 용어 정의 보완 + 글자 일치) 비교 (설정 g·k2·k2v3)")
+    parser.add_argument("--concept-df", action="store_true",
+                        help="흔한 개념(문서 빈도 5·10·20%% 초과) 제외 비교 (설정 g·k2·k2v3·k2v3_df05/10/20)")
+    args = parser.parse_args()
+    if args.concept_df:
+        from retrieval_concept_df import eval_concept_df
+        eval_concept_df()
+        return
+    if args.concept_v3:
+        from retrieval_concept_v3 import eval_concept_v3
+        eval_concept_v3()
+        return
+    if args.concept:
+        from retrieval_mix import eval_concept
+        eval_concept()
+        return
+    if args.mix2:
+        from retrieval_mix import eval_mix2
+        eval_mix2()
+        return
+    if args.decision:
+        eval_decision()
+        return
+    if args.mix:
+        from retrieval_mix import eval_mix
+        eval_mix()
+        return
     import openai
 
     queries, gold = load_inputs()
@@ -265,8 +455,9 @@ def main() -> None:
 
     conn = connect(load_env())
     conn.execute("SET default_transaction_read_only = on")  # DB 쓰기 금지
-    chunks_orig = {q["id"]: score_chunks(conn, t, v) for q, t, v in zip(queries, texts_orig, vec_orig)}
-    chunks_exp = {q["id"]: score_chunks(conn, t, v) for q, t, v in zip(queries, texts_exp, vec_exp)}
+    base = lambda rows: [c for c in rows if c["doc_kind"] in BASE_KINDS]  # noqa: E731  DECISION 이 들어오기 전과 같은 조건
+    chunks_orig = {q["id"]: base(score_chunks(conn, t, v)) for q, t, v in zip(queries, texts_orig, vec_orig)}
+    chunks_exp = {q["id"]: base(score_chunks(conn, t, v)) for q, t, v in zip(queries, texts_exp, vec_exp)}
     conn.close()
 
     results = []
