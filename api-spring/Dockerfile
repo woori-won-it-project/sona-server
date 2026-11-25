@@ -1,6 +1,8 @@
 # ---- build ----
 FROM eclipse-temurin:21-jdk AS build
 WORKDIR /app
+# 이미지 빌드 중에는 spotlessApply(자동 정렬)를 돌리지 않는다. 정렬은 로컬에서 끝난 코드만 들어온다는 전제
+ENV CI=true
 
 COPY gradlew settings.gradle build.gradle ./
 COPY gradle gradle
