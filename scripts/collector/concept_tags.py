@@ -330,8 +330,8 @@ def query_concepts(llm: LLM, vocab: dict) -> dict:
 #           그다음 1회: 각 용어를 기존 80개 개념 중 같은 개념에 대응시키거나 새 개념으로 (기존 개념은 지우거나 이름을 바꾸지 않음)
 #           같은 개념이면 동의어만 더하고 sources 에 policy_definition 추가 → concept_vocab_v3.json
 #   tag3    v3 목록으로 GPT 선택(0~3개) + 글자 일치(제목·쟁점·내용 앞 1500자에 개념 이름·동의어가 그대로 나오면 추가)
-#           → case_tag 의 axis='CONCEPT' 행을 전부 지우고 다시 넣음 (source='LLM'. 글자 일치 태그도 source 제약상 'LLM',
-#             confidence 1.00. 어떤 방법으로 붙었는지는 concept_tags_v3.json)
+#           → case_tag 의 axis='CONCEPT' 행을 전부 지우고 다시 넣음. GPT 가 고른 태그는 source='LLM',
+#             글자 일치로만 붙은 태그는 source='RULE' (confidence 1.00). 방법별 상세는 concept_tags_v3.json 의 methods
 #   query3  GPT 선택 + 글자 일치 합집합 → query_concepts_v3.json
 #   글자 일치는 2글자 이상 동의어만 (1글자는 거의 모든 글에 나온다)
 
@@ -546,10 +546,11 @@ def tag_documents_v3(llm: LLM, vocab: dict, docs: list[dict], dry_run: bool) -> 
         conn = connect(load_env())
         with conn.transaction():
             deleted = conn.execute("DELETE FROM case_tag WHERE axis = 'CONCEPT'").rowcount
-            rows = [(d["id"], t["name"][:200], round(t["confidence"], 2)) for d in docs for t in tags[d["key"]]]
+            rows = [(d["id"], t["name"][:200], "RULE" if t["methods"] == ["literal"] else "LLM",
+                     round(t["confidence"], 2)) for d in docs for t in tags[d["key"]]]
             with conn.cursor() as cur:
                 cur.executemany("INSERT INTO case_tag (dispute_case_id, axis, value, source, confidence) "
-                                "VALUES (%s, 'CONCEPT', %s, 'LLM', %s)", rows)
+                                "VALUES (%s, 'CONCEPT', %s, %s, %s)", rows)
         conn.close()
         print(f"case_tag CONCEPT: 삭제 {deleted}, 추가 {len(rows)}")
     return {"tags": tags, "problems": problems}

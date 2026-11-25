@@ -222,8 +222,8 @@ def eval_concept_v3() -> None:
             "k2 는 이전 실험과 같은 입력(v1 태그 스냅샷·v1 조항 개념)으로 다시 계산 (질의 임베딩은 새로 받음)",
             "라벨 없는 자료(v3 정답표에 없는 자료)는 오답. label_delta4 의 56행은 아직 라벨이 없으므로 오답",
             "가점은 개념이 하나라도 겹치면 한 번만 (겹친 개념 수와 무관)",
-            "글자 일치 태그도 case_tag.source 제약(FSS/LLM/MANUAL) 때문에 source='LLM', confidence 1.00 "
-            "(어느 방법으로 붙었는지는 concept_tags_v3.json 의 methods)",
+            "자료 개념은 case_tag CONCEPT 전부 (GPT 선택 = source 'LLM', 글자 일치로만 붙은 것 = 'RULE'). "
+            "방법별 상세는 concept_tags_v3.json 의 methods",
         ],
         "summary_table": [{"config": r["name"], **{k: r["summary"][k] for k in keys_sum}} for r in results],
         "focus_first_relevant_rank": {q: first_rank.get(q) for q in FOCUS},

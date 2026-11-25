@@ -1,7 +1,8 @@
 """금감원 분쟁조정사례(CASE) / 분쟁해결기준(STANDARD) / 분쟁조정결정례(DECISION, 보험) 수집기.
 
 원본(상세 HTML, 모든 첨부)은 data/raw/ 에 빠짐없이 저장하고, 파싱은 최소한만 해서 dispute_case 에 upsert 한다.
-실행마다 crawl_job 한 건을 남긴다.
+수집 이력은 DB 가 아니라 리포트 JSON 으로 남긴다: --report 경로, 없으면 (dry-run 이 아닐 때)
+data/raw/_report/collect_{kind}_{UTC 시각}.json (시작·종료 시각, 상태, 건수, 오류, 항목별 요약).
 
 사용 (레포 루트에서):
     python scripts/collector/collector.py --kind case --limit 3
@@ -30,6 +31,7 @@ import subprocess
 import sys
 import tempfile
 import traceback
+from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import parse_qs, unquote, unquote_plus, urljoin, urlparse
 
@@ -462,14 +464,14 @@ class Collector:
 # ---------------------------------------------------------------- DB
 
 UPSERT_SQL = """
-INSERT INTO dispute_case (crawl_job_id, doc_kind, source_url, source_key, category, product_type, title, summary,
+INSERT INTO dispute_case (doc_kind, source_url, source_key, category, product_type, title, summary,
     complaint, dispute_issue, decision_reason, consumer_warning, raw_text, raw_file_path,
     attachments, meta, registered_at)
-VALUES (%(crawl_job_id)s, %(doc_kind)s, %(source_url)s, %(source_key)s, %(category)s, %(product_type)s, %(title)s,
+VALUES (%(doc_kind)s, %(source_url)s, %(source_key)s, %(category)s, %(product_type)s, %(title)s,
     %(summary)s, %(complaint)s, %(dispute_issue)s, %(decision_reason)s, %(consumer_warning)s, %(raw_text)s,
     %(raw_file_path)s, %(attachments)s, %(meta)s, %(registered_at)s)
 ON CONFLICT (source_url) DO UPDATE SET
-    crawl_job_id = EXCLUDED.crawl_job_id, doc_kind = EXCLUDED.doc_kind, source_key = EXCLUDED.source_key,
+    doc_kind = EXCLUDED.doc_kind, source_key = EXCLUDED.source_key,
     category = EXCLUDED.category, product_type = EXCLUDED.product_type, title = EXCLUDED.title,
     summary = EXCLUDED.summary,
     complaint = EXCLUDED.complaint, dispute_issue = EXCLUDED.dispute_issue,
@@ -529,12 +531,11 @@ def main() -> None:
     items = load_items(args.kind, args)
     doc_kind = SOURCES[args.kind]["doc_kind"]
 
-    conn = job_id = None
-    if not args.dry_run:
-        conn = connect(env)
-        job_id = conn.execute(
-            "INSERT INTO crawl_job (source, status, total_count) VALUES (%s, 'RUNNING', %s) RETURNING id",
-            (doc_kind, len(items))).fetchone()[0]
+    started_at = datetime.now(timezone.utc)
+    report_path = args.report or (None if args.dry_run else str(
+        RAW_DIR / "_report" / f"collect_{args.kind}_{started_at.strftime('%Y%m%dT%H%M%SZ')}.json"))
+    full_rows = bool(args.report)  # --report 를 직접 준 경우만 CASE/STANDARD 행 전체를 넣고, 기본 리포트는 요약만
+    conn = None if args.dry_run else connect(env)
 
     from psycopg.types.json import Jsonb
     ok, failed, errors, reported, row_count, skipped = 0, 0, [], [], 0, 0
@@ -546,7 +547,7 @@ def main() -> None:
             rows = decision.split_rows(row) if doc_kind == "DECISION" else [row]
             if doc_kind == "DECISION" and not rows:  # 본문을 뽑은 결정서 없음 (HWP 3.0·PDF·TIF 뿐) → 저장 안 함
                 skipped += 1
-                if args.report:
+                if report_path:
                     reported.append(decision.skipped_view(row))
                 print(f"[{doc_kind} {key}] skipped  {row['meta'].get('parse_notes', [])}")
                 continue
@@ -556,19 +557,22 @@ def main() -> None:
             else:
                 with conn.transaction():
                     for r in rows:
-                        params = dict(r, crawl_job_id=job_id,
-                                      attachments=Jsonb(r["attachments"]), meta=Jsonb(r["meta"]))
+                        params = dict(r, attachments=Jsonb(r["attachments"]), meta=Jsonb(r["meta"]))
                         conn.execute(UPSERT_SQL, params)
             ok += 1
             row_count += len(rows)
-            if args.report:
-                reported.extend(decision.report_view(r) if doc_kind == "DECISION" else r for r in rows)
+            if report_path:
+                reported.extend(decision.report_view(r) if doc_kind == "DECISION"
+                                else r if full_rows
+                                else {"source_key": r["source_key"], "source_url": r["source_url"], "title": r["title"],
+                                      "parse_notes": r["meta"].get("parse_notes", [])}
+                                for r in rows)
             for r in rows:
                 print(f"[{doc_kind} {r['source_key']}] ok  notes={r['meta'].get('parse_notes', [])}")
         except Exception as e:  # 한 건 실패가 전체를 멈추지 않도록
             failed += 1
             errors.append(f"{key}: {e}")
-            if args.report and doc_kind == "DECISION":
+            if report_path:
                 reported.append({"source_key": key, "source_url": item["source_url"], "failed": True,
                                  "title": item.get("title"), "registered_at": item.get("registered_at"),
                                  "error": str(e)[:500]})
@@ -576,23 +580,22 @@ def main() -> None:
             traceback.print_exc()
 
     if conn:
-        conn.execute(
-            "UPDATE crawl_job SET status=%s, success_count=%s, fail_count=%s, error_message=%s, finished_at=now() "
-            "WHERE id=%s",
-            ("SUCCESS" if failed == 0 else "FAILED", ok, failed,
-             "\n".join(errors + ([f"skipped(저장 안 함) {skipped}건"] if skipped else [])) or None, job_id))
         conn.close()
-    if args.report:
-        out = Path(args.report)
+    if report_path:
+        out = Path(report_path)
         out.parent.mkdir(parents=True, exist_ok=True)
-        summary = {"doc_kind": doc_kind, "dry_run": args.dry_run, "total": len(items), "ok": ok, "rows": row_count,
+        summary = {"doc_kind": doc_kind, "dry_run": args.dry_run, "status": "SUCCESS" if failed == 0 else "FAILED",
+                   "started_at": started_at.isoformat(), "finished_at": datetime.now(timezone.utc).isoformat(),
+                   "options": {"keys": args.keys, "limit": args.limit, "skip_existing": args.skip_existing,
+                               "reparse": args.reparse},
+                   "total": len(items), "ok": ok, "rows": row_count,
                    "skipped": skipped, "failed": failed, "errors": errors}
         if doc_kind == "DECISION":
             summary["site"] = decision.site_summary()
         out.write_text(json.dumps({**summary, "items": reported},
                                   ensure_ascii=False, indent=2, default=str), encoding="utf-8")
         print(f"report: {out}")
-    print(f"done: job={job_id} total={len(items)} ok={ok} skipped={skipped} failed={failed} rows={row_count}")
+    print(f"done: total={len(items)} ok={ok} skipped={skipped} failed={failed} rows={row_count}")
 
 
 if __name__ == "__main__":
