@@ -2,6 +2,7 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '3.5.16'
     id 'io.spring.dependency-management' version '1.1.7'
+    id 'com.diffplug.spotless' version '8.12.0'
 }
 
 group = 'com.sona'
@@ -40,6 +41,25 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
+}
+
+// 코드 포맷: palantir-java-format (4칸 들여쓰기, 120자). 버전을 고정해 두면 플러그인을 올려도 포맷이 갑자기 바뀌지 않는다
+spotless {
+    java {
+        palantirJavaFormat('2.103.0')
+        removeUnusedImports()
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+}
+
+// 로컬에서는 컴파일할 때마다 spotlessApply 로 자동 정렬해서, 포맷 때문에 CI 가 실패하는 일을 줄인다.
+// CI(GitHub Actions 는 환경변수 CI=true)에서는 파일을 고치지 않고 build → check → spotlessCheck 로 검사만 한다.
+// CI 에서 자동 정렬까지 하면 정렬 안 된 코드도 통과해 버리므로, 정렬은 커밋 전에 로컬에서 끝나 있어야 한다.
+if (!System.getenv('CI')) {
+    tasks.named('compileJava') {
+        dependsOn 'spotlessApply'
+    }
 }
 
 // bootJar 하나만 생성 (Dockerfile에서 build/libs/*.jar 복사)
