@@ -1,0 +1,27 @@
+# mock 프로필: PostgreSQL 없이 메모리 DB(H2)와 목업 데이터로 실행한다.
+# 실행: ./gradlew bootRun --args='--spring.profiles.active=mock'
+# 서버를 끄면 데이터가 모두 사라지고, 켤 때마다 mock/data.sql 로 다시 채워진다.
+spring:
+  datasource:
+    url: jdbc:h2:mem:sona;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH
+    username: sa
+    password:
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:mock/schema.sql
+      data-locations: classpath:mock/data.sql
+  h2:
+    console:
+      enabled: true   # http://localhost:8080/h2-console (JDBC URL 은 위 url 그대로)
+  # 실험·분석 비동기 처리가 붙기 전까지 RabbitMQ·Redis 는 쓰지 않는다
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+
+sona:
+  auth:
+    # 토큰 없이 요청하면 1번 회원으로 본다 (Swagger 에서 바로 시험하기 위한 mock 전용 설정)
+    default-member-id: 1
