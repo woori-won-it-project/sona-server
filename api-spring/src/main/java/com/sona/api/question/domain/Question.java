@@ -56,6 +56,10 @@ public class Question extends BaseTimeEntity {
     @Column(name = "reference_answer_reason", columnDefinition = "TEXT")
     private String referenceAnswerReason;
 
+    /** 정답을 담은 설명서 문구 (줄바꿈 구분). 3지선다 보기를 만들 때 함께 만든다. 페르소나가 이 내용을 놓치는지 볼 때 쓴다 */
+    @Column(name = "key_phrases", columnDefinition = "TEXT")
+    private String keyPhrases;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private QuestionStatus status = QuestionStatus.DRAFT;
@@ -69,5 +73,9 @@ public class Question extends BaseTimeEntity {
         this.sourceType = sourceType;
         this.questionText = questionText;
         this.generationReason = generationReason;
+    }
+
+    public void assignKeyPhrases(String keyPhrases) {
+        this.keyPhrases = keyPhrases;
     }
 }

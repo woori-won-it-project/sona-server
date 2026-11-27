@@ -120,12 +120,25 @@ CREATE TABLE questions (
     generation_reason        TEXT,
     reference_answer         VARCHAR(10)  CHECK (reference_answer IN ('YES','NO')),
     reference_answer_reason  TEXT,
+    key_phrases              TEXT,                -- 정답을 담은 설명서 문구 (줄바꿈 구분). 3지선다 보기를 만들 때 함께 만든다
     status                   VARCHAR(20)  NOT NULL DEFAULT 'DRAFT' CHECK (status IN ('DRAFT','SELECTED','APPROVED')),
     approved_at              TIMESTAMP,
     created_at               TIMESTAMP    NOT NULL DEFAULT now(),
     updated_at               TIMESTAMP    NOT NULL DEFAULT now()
 );
 CREATE INDEX idx_questions_review ON questions (review_id, status);
+
+-- 3지선다 보기 (spec 4.7.2). 정답 1 + 오해 2. 첫 실험 때 한 번 만들고 재실험에도 그대로 쓴다
+CREATE TABLE question_options (
+    id               BIGSERIAL PRIMARY KEY,
+    question_id      BIGINT       NOT NULL REFERENCES questions(id) ON DELETE CASCADE,
+    option_key       VARCHAR(1)   NOT NULL CHECK (option_key IN ('A','B','C')),
+    option_text      TEXT         NOT NULL,
+    is_correct       BOOLEAN      NOT NULL,
+    is_critical      BOOLEAN      NOT NULL DEFAULT FALSE,   -- 실제보다 더 받는다고 믿는 오해
+    created_at       TIMESTAMP    NOT NULL DEFAULT now(),
+    UNIQUE (question_id, option_key)
+);
 
 CREATE TABLE question_evidences (
     id               BIGSERIAL PRIMARY KEY,
@@ -144,7 +157,12 @@ CREATE TABLE personas (
     financial_literacy  VARCHAR(20)  NOT NULL CHECK (financial_literacy IN ('LOW','MEDIUM','HIGH')),
     reading_behavior    TEXT         NOT NULL,
     description         TEXT,
-    prompt              TEXT         NOT NULL
+    prompt              TEXT         NOT NULL,
+    -- 페르소나 속성 (spec 4.7.1). 실험에서 정보를 덜어 내는 규칙에 쓴다
+    age_group           VARCHAR(10)  NOT NULL CHECK (age_group IN ('TWENTIES','FORTIES','SIXTIES')),
+    diligence           NUMERIC(3,2) NOT NULL CHECK (diligence BETWEEN 0 AND 1),   -- 꼼꼼함
+    info_path           VARCHAR(20)  NOT NULL CHECK (info_path IN ('GUIDE','AGENT_TALK')),  -- 설명서 직접 / 설계사 설명
+    disposition         VARCHAR(20)  NOT NULL CHECK (disposition IN ('OPTIMISTIC','CAUTIOUS'))
 );
 
 CREATE TABLE review_personas (
@@ -178,12 +196,24 @@ CREATE TABLE experiment_responses (
     document_id        BIGINT       NOT NULL REFERENCES documents(id) ON DELETE CASCADE,  -- 응답 근거 문서
     question_id        BIGINT       NOT NULL REFERENCES questions(id) ON DELETE CASCADE,
     selected_answer    VARCHAR(10)  CHECK (selected_answer IN ('YES','NO','UNSURE')),
+    selected_option    VARCHAR(1)   CHECK (selected_option IN ('A','B','C')),   -- 3지선다로 고른 보기
     response_reason    TEXT,
     grading_result     VARCHAR(20)  CHECK (grading_result IN ('CORRECT','INCORRECT','UNDETERMINED')),
     evidence_page      INT,
     evidence_text      TEXT,
     created_at         TIMESTAMP    NOT NULL DEFAULT now(),
     UNIQUE (experiment_id, review_persona_id, question_id)
+);
+
+-- 읽기 메모 (spec 4.7.2): 페르소나가 설명서를 읽고 남긴 메모. 답할 때는 이 메모만 본다
+CREATE TABLE reading_memos (
+    id                 BIGSERIAL PRIMARY KEY,
+    experiment_id      BIGINT       NOT NULL REFERENCES experiments(id) ON DELETE CASCADE,
+    review_persona_id  BIGINT       NOT NULL REFERENCES review_personas(id) ON DELETE CASCADE,
+    memo               TEXT         NOT NULL,
+    first_impression   TEXT,
+    created_at         TIMESTAMP    NOT NULL DEFAULT now(),
+    UNIQUE (experiment_id, review_persona_id)
 );
 
 CREATE TABLE revision_suggestions (
