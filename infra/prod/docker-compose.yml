@@ -1,0 +1,49 @@
+# 운영 서버(앱 EC2)용. 실행은 서버의 /opt/sona 에서:
+#   APP_IMAGE=<ECR 이미지>:<태그> RABBITMQ_PASSWORD=<Parameter Store 값> \
+#   docker compose -f infra/prod/docker-compose.yml up -d
+name: sona-prd
+
+services:
+  api-spring:
+    image: ${APP_IMAGE:?APP_IMAGE를 지정하세요}
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      AWS_REGION: ap-northeast-2
+    ports:
+      - "8080:8080"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:3.13.7-management
+    hostname: rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: sona
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?RABBITMQ_PASSWORD를 지정하세요}
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis:7.4.12
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  rabbitmq-data:
+  redis-data:

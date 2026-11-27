@@ -1,6 +1,10 @@
 spring:
   application:
     name: sona-api
+  cloud:
+    aws:
+      region:
+        static: ap-northeast-2
   profiles:
     default: local
   # 루트 .env를 프로퍼티로 읽음 (IDE/bootRun 실행 시). OS 환경변수가 항상 우선.
