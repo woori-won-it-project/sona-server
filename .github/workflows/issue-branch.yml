@@ -1,0 +1,25 @@
+# 이슈에 담당자가 지정되면 dev 기준 브랜치(feat/<번호> 등)를 만들고 이슈에 연결한다.
+# 이슈 이벤트 워크플로는 기본 브랜치에 있는 이 파일로 실행된다.
+name: Issue branch
+
+on:
+  issues:
+    types: [assigned]
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  create-branch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github/scripts
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const run = require('./.github/scripts/issue-branch.js');
+            await run({ github, context, core });
