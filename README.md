@@ -164,6 +164,8 @@ Parameter Store 키 (값은 AWS에만 저장, 커밋 금지):
 | `/sona/prd/spring.datasource.password` | SecureString |
 | `/sona/prd/spring.rabbitmq.password` | SecureString |
 | `/sona/prd/sona.embedding.api-key` | SecureString |
+| `/sona/prd/sona.llm.provider` | String (`claude`. 없으면 `mock` = 가짜 응답) |
+| `/sona/prd/sona.llm.api-key` | SecureString |
 
 ## 주의사항
 
