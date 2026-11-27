@@ -91,8 +91,7 @@ jobs:
                   url: $issue.html_url,
                   color: 15844367,
                   description: (
-                    "**" + $issue.title[:250] + "**\n\n"
-                    + (($issue.body // "내용 없음")[:500])
+                    "**" + $issue.title[:250] + "**"
                     + "\n\n[🔗 Issue 바로가기](" + $issue.html_url + ")"
                   ),
                   fields: (
@@ -124,10 +123,9 @@ jobs:
                   url: $pr.html_url,
                   color: $status.color,
                   description: (
-                    "**" + $pr.title[:250] + "**\n\n"
-                    + (($pr.body // "내용 없음")[:500])
+                    "**" + $pr.title[:250] + "**"
                     + "\n\n[🔗 Pull Request 바로가기](" + $pr.html_url + ")"
-                    + "\n[🔗 변경된 파일 보기](" + $pr.html_url + "/files)"
+                    + " | [변경 파일 보기](" + $pr.html_url + "/files)"
                   ),
                   fields: (
                     common + [
