@@ -1,0 +1,196 @@
+name: Discord Notify
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+  issues:
+    types: [opened]
+  pull_request:
+    types: [opened, reopened, closed]
+
+permissions:
+  contents: read
+
+jobs:
+  discord:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Send Discord notification
+        env:
+          DISCORD_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          EVENT_TYPE: ${{ github.event_name }}
+          REPOSITORY: ${{ github.repository }}
+          BRANCH: ${{ github.ref_name }}
+          ACTOR: ${{ github.actor }}
+
+        run: |
+          if [ -z "$DISCORD_URL" ]; then
+            echo "Discord webhook URL is not configured."
+            exit 1
+          fi
+
+          PAYLOAD=$(jq \
+            --arg event "$EVENT_TYPE" \
+            --arg repo "$REPOSITORY" \
+            --arg branch "$BRANCH" \
+            --arg actor "$ACTOR" \
+            --arg timestamp "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            '
+            def field($name; $value; $inline):
+              {
+                name: $name,
+                value: (($value | tostring)[:500]),
+                inline: $inline
+              };
+
+            def common:
+              [
+                field("📁 Repository"; $repo; true),
+                field("👤 수행자"; $actor; true)
+              ];
+
+            def names:
+              if length == 0 then "미지정"
+              else join(", ")
+              end;
+
+            (
+              if $event == "push" then
+                {
+                  title: "📦 새로운 Push",
+                  url: (.compare // .repository.html_url),
+                  color: 3066993,
+                  fields: (
+                    common + [
+                      field("🌿 브랜치"; $branch; true),
+                      field("📊 커밋 수"; (.commits | length); true),
+                      field(
+                        "📝 커밋 내역";
+                        (
+                          (.commits // []) | .[:5] |
+                          map(
+                            "[`" + .id[:7] + "`](" + .url + ") "
+                            + (.message | split("\n")[0][:100])
+                            + " - " + (.author.name // "Unknown")
+                          ) | join("\n")
+                        ) | if . == "" then "없음" else . end;
+                        false
+                      )
+                    ]
+                  ),
+                  description: "[🔗 전체 변경사항 보기](" + .compare + ")"
+                }
+
+              elif $event == "issues" then
+                .issue as $issue |
+                {
+                  title: "📝 새로운 Issue #" + ($issue.number | tostring),
+                  url: $issue.html_url,
+                  color: 15844367,
+                  description: (
+                    "**" + $issue.title[:250] + "**"
+                    + "\n\n[🔗 Issue 바로가기](" + $issue.html_url + ")"
+                  ),
+                  fields: (
+                    common + [
+                      field("✍️ 작성자"; $issue.user.login; true),
+                      field("🏷️ 라벨"; ($issue.labels | map(.name) | names); true),
+                      field("👥 담당자"; ($issue.assignees | map(.login) | names); false)
+                    ]
+                  )
+                }
+
+              elif $event == "pull_request" then
+                .pull_request as $pr |
+
+                (
+                  if $pr.merged == true then
+                    {title: "🎉 Pull Request 병합", color: 10181046}
+                  elif .action == "closed" then
+                    {title: "❌ Pull Request 종료", color: 15158332}
+                  elif .action == "reopened" then
+                    {title: "🔄 Pull Request 다시 열림", color: 3447003}
+                  else
+                    {title: "🚀 새로운 Pull Request", color: 3447003}
+                  end
+                ) as $status |
+
+                {
+                  title: ($status.title + " #" + ($pr.number | tostring)),
+                  url: $pr.html_url,
+                  color: $status.color,
+                  description: (
+                    "**" + $pr.title[:250] + "**"
+                    + "\n\n[🔗 Pull Request 바로가기](" + $pr.html_url + ")"
+                    + " | [변경 파일 보기](" + $pr.html_url + "/files)"
+                  ),
+                  fields: (
+                    common + [
+                      field("✍️ 작성자"; $pr.user.login; true),
+                      field(
+                        "📌 상태";
+                        (
+                          if $pr.merged then "Merged"
+                          elif $pr.state == "closed" then "Closed"
+                          elif $pr.draft then "Draft"
+                          else "Open"
+                          end
+                        );
+                        true
+                      ),
+                      field(
+                        "🌿 브랜치";
+                        ("`" + $pr.head.ref + "` → `" + $pr.base.ref + "`");
+                        false
+                      ),
+                      field("📦 커밋 수"; ($pr.commits // "확인 불가"); true),
+                      field("📂 변경 파일"; ($pr.changed_files // "확인 불가"); true),
+                      field(
+                        "📊 코드 변경";
+                        (
+                          "+" + (($pr.additions // "?") | tostring)
+                          + " / -" + (($pr.deletions // "?") | tostring)
+                        );
+                        true
+                      ),
+                      field(
+                        "👀 리뷰어";
+                        ($pr.requested_reviewers | map(.login) | names);
+                        true
+                      ),
+                      field(
+                        "🏷️ 라벨";
+                        ($pr.labels | map(.name) | names);
+                        true
+                      )
+                    ]
+                  )
+                }
+              else
+                empty
+              end
+            ) |
+            . + {
+              footer: {
+                text: "GitHub Actions"
+              },
+              timestamp: $timestamp
+            } |
+            {
+              username: "GitHub Notify",
+              avatar_url: "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
+              allowed_mentions: {
+                parse: []
+              },
+              embeds: [.]
+            }
+            ' "$GITHUB_EVENT_PATH")
+
+          curl --fail-with-body --silent --show-error \
+            -H "Content-Type: application/json" \
+            -X POST \
+            --data "$PAYLOAD" \
+            "$DISCORD_URL"
