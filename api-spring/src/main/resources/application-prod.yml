@@ -1,0 +1,12 @@
+spring:
+  config:
+    import:
+      - optional:aws-parameterstore:/sona/prd/
+  rabbitmq:
+    host: rabbitmq
+    port: 5672
+    username: sona
+  data:
+    redis:
+      host: redis
+      port: 6379

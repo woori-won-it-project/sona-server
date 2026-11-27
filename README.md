@@ -146,6 +146,27 @@ docker compose -f infra/docker-compose.yml --env-file .env up -d
 # 최신 dump(sona_YYYY-MM-DD.dump)를 dumps/에 넣고 restore 스크립트 실행
 ```
 
+## 운영(prod) 설정
+
+운영 서버(AWS)는 `prod` 프로필로 실행합니다. 로컬 개발에는 영향이 없습니다.
+
+| 파일 | 용도 |
+|---|---|
+| `api-spring/src/main/resources/application-prod.yml` | 운영 설정. DB 접속 정보와 비밀값은 AWS Parameter Store(`/sona/prd/`)에서 읽어 옵니다 |
+| `infra/prod/docker-compose.yml` | 운영 서버용 compose. postgres 없음(RDS 사용), ECR 이미지 사용, 8080만 노출 |
+
+Parameter Store 키 (값은 AWS에만 저장, 커밋 금지):
+
+| 키 | 유형 |
+|---|---|
+| `/sona/prd/spring.datasource.url` | String |
+| `/sona/prd/spring.datasource.username` | String |
+| `/sona/prd/spring.datasource.password` | SecureString |
+| `/sona/prd/spring.rabbitmq.password` | SecureString |
+| `/sona/prd/sona.embedding.api-key` | SecureString |
+| `/sona/prd/sona.llm.provider` | String (`claude`. 없으면 `mock` = 가짜 응답) |
+| `/sona/prd/sona.llm.api-key` | SecureString |
+
 ## 주의사항
 
 - `.env`, 원본 데이터(`data/raw/`, hwp 등), dump 파일은 **절대 커밋하지 않습니다.** 이 레포는 public입니다.

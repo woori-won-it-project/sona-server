@@ -32,6 +32,8 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-amqp'
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.10.1'
+    implementation platform('io.awspring.cloud:spring-cloud-aws-dependencies:3.4.1')
+    implementation 'io.awspring.cloud:spring-cloud-aws-starter-parameter-store'
     // 비밀번호 해시 비교만 씀 (Spring Security 전체는 아직 넣지 않음)
     implementation 'org.springframework.security:spring-security-crypto'
     // 페르소나 실험 LLM 호출 (Claude). 호출은 global/llm/ClaudeLlmClient 한 곳에서만
