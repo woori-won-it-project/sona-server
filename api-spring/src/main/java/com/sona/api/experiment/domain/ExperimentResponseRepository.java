@@ -6,4 +6,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface ExperimentResponseRepository extends JpaRepository<ExperimentResponse, Long> {
 
     List<ExperimentResponse> findByExperimentId(Long experimentId);
+
+    List<ExperimentResponse> findByExperimentIdIn(List<Long> experimentIds);
+
+    void deleteByExperimentId(Long experimentId);
 }

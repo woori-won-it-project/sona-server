@@ -56,6 +56,10 @@ public class ExperimentResponse extends BaseCreatedEntity {
     @Column(name = "selected_answer", length = 10)
     private Answer selectedAnswer;
 
+    /** 3지선다로 고른 보기 (A/B/C). 예/아니요 응답이면 null */
+    @Column(name = "selected_option", length = 1)
+    private String selectedOption;
+
     @Column(name = "response_reason", columnDefinition = "TEXT")
     private String responseReason;
 
@@ -76,6 +80,7 @@ public class ExperimentResponse extends BaseCreatedEntity {
             Document document,
             Question question,
             Answer selectedAnswer,
+            String selectedOption,
             String responseReason,
             GradingResult gradingResult,
             Integer evidencePage,
@@ -85,6 +90,7 @@ public class ExperimentResponse extends BaseCreatedEntity {
         this.document = document;
         this.question = question;
         this.selectedAnswer = selectedAnswer;
+        this.selectedOption = selectedOption;
         this.responseReason = responseReason;
         this.gradingResult = gradingResult;
         this.evidencePage = evidencePage;

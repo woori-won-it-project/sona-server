@@ -14,6 +14,11 @@ spring:
       ddl-auto: validate   # 스키마는 infra/init.sql이 소유. create/update로 바꾸지 말 것
 
 sona:
+  # 페르소나 실험 AI. mock = AI 를 부르지 않는 가짜 응답(기본값) / claude = Claude API 실제 호출
+  llm:
+    provider: ${LLM_PROVIDER:mock}
+    model: ${LLM_MODEL:claude-haiku-5-5}
+    api-key: ${ANTHROPIC_API_KEY:}
   embedding:
     model: text-embedding-3-small
     dimensions: 1536        # infra/init.sql의 vector(1536)과 맞출 것
