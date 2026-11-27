@@ -8,6 +8,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.math.BigDecimal;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -39,4 +40,23 @@ public class Persona {
     /** AI 에게 주는 성격 설명. API 응답에는 넣지 않는다. */
     @Column(nullable = false, columnDefinition = "TEXT")
     private String prompt;
+
+    /** 나이대 (spec 4.7.1) */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "age_group", nullable = false, length = 10)
+    private AgeGroup ageGroup;
+
+    /** 꼼꼼함 0~1. 읽는 문장 양, 핵심 내용을 놓칠 확률, 메모 글자 수를 정한다 */
+    @Column(nullable = false, precision = 3, scale = 2)
+    private BigDecimal diligence;
+
+    /** 정보 경로: 설명서 직접 / 설계사 설명 */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "info_path", nullable = false, length = 20)
+    private InfoPath infoPath;
+
+    /** 성향: 낙관 / 신중 */
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private Disposition disposition;
 }

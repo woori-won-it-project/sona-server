@@ -39,7 +39,7 @@ class MockProfileTest {
 
     @Test
     void 목업_데이터가_들어간다() {
-        assertThat(reviewRepository.count()).isEqualTo(2);
+        assertThat(reviewRepository.count()).isEqualTo(3);
         assertThat(experimentResponseRepository.count()).isEqualTo(18);
     }
 
