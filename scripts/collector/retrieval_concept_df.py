@@ -20,8 +20,8 @@ from embedder import DEFAULT_MODEL, cost
 from retrieval_concept_v3 import BONUS, DELTA5_FILE, EXTRA, VOCAB_V3, load_tag_sets
 from retrieval_eval import BASE_KINDS, CANDIDATE_CHUNKS, CATEGORY, LABEL_COLUMNS, TOP_K, case_key, evaluate, \
     load_inputs, load_labeled_keys
-from retrieval_mix import CONTROLS, FOCUS, GOLD_DIR, LABEL_V3, W_KW, W_VEC, build_rankings, by_score, is_decision, \
-    rank_forced, rank_split, score_all
+from retrieval_mix import CONTROLS, FOCUS, GOLD_DIR, LABEL_V3, SPLIT_BASE, SPLIT_DECISION, W_KW, W_VEC, \
+    build_rankings, by_score, is_decision, rank_forced, rank_split, score_all
 
 DF_FILE = GOLD_DIR / "concept_df.json"
 DELTA6_FILE = GOLD_DIR / "label_delta6.csv"
@@ -38,7 +38,7 @@ DESC = {
 }
 
 
-def document_frequency(doc_v3: dict[int, set[str]]) -> dict:
+def document_frequency(doc_v3: dict[int, set[str]], write: bool = True) -> dict:
     conn = connect(load_env())
     conn.execute("SET default_transaction_read_only = on")
     ids = [r[0] for r in conn.execute(
@@ -53,8 +53,28 @@ def document_frequency(doc_v3: dict[int, set[str]]) -> dict:
     out = {"generated_at": datetime.now(timezone.utc).isoformat(), "tags": "case_tag CONCEPT (v3: GPT ∪ 글자 일치)",
            "total_documents": total, "concepts": len(rows),
            "concepts_with_no_documents": sum(1 for r in rows if not r["documents"]), "df": rows}
-    DF_FILE.write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
+    if write:
+        DF_FILE.write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
     return out
+
+
+def excluded_concepts(df: dict) -> dict[str, list[str]]:
+    """설정별로 문서 빈도 비율이 기준을 넘는 개념 (비율 큰 순)."""
+    ratio = {r["concept"]: r["ratio"] for r in df["df"]}
+    return {n: sorted((c for c, r in ratio.items() if r > t), key=lambda c: -ratio[c]) for n, t in THRESHOLDS.items()}
+
+
+def rank_concept(chunks: list[dict], qid: str, tag_set: dict, drop: set[str], bonus: float,
+                 n_base: int = SPLIT_BASE, n_dec: int = SPLIT_DECISION) -> tuple[list[dict], int]:
+    """g 방식 + 개념 겹치는 자료 강제 포함·가점 (drop 개념은 겹침 판단에서 뺌). 반환: (순위, 강제 포함 수).
+    n_base·n_dec 로 상위 개수(CASE·STANDARD + DECISION)를 바꾼다 (기본 7 + 3)."""
+    cs = [c for c in chunks if c["doc_kind"] in BASE_KINDS]
+    dec = [c for c in chunks if c["doc_kind"] == "DECISION"]
+    qc = tag_set["query"].get(qid, set()) - drop
+    ov = {cid for cid, cc in tag_set["doc"].items() if (cc - drop) & qc}
+    r_cs, f_cs = rank_forced(cs, ov, bonus)
+    r_dec, f_dec = rank_forced(dec, ov, bonus)
+    return rank_split(by_score(r_cs + r_dec), [], qid, n_base, n_dec), f_cs + f_dec
 
 
 def eval_concept_df() -> None:
@@ -73,26 +93,16 @@ def eval_concept_df() -> None:
     tags = load_tag_sets({v: k for k, v in keys.items()})
     df = document_frequency(tags["v3"]["doc"])
     ratio = {r["concept"]: r["ratio"] for r in df["df"]}
-    excluded = {n: sorted((c for c, r in ratio.items() if r > t), key=lambda c: -ratio[c]) for n, t in THRESHOLDS.items()}
-
-    def overlap(tv: str, qid: str, drop: set[str]) -> set[int]:
-        qc = tags[tv]["query"].get(qid, set()) - drop
-        return {cid for cid, cs in tags[tv]["doc"].items() if (cs - drop) & qc}
+    excluded = excluded_concepts(df)
 
     def rank(qid: str, chunks: list[dict]):
-        cs = [c for c in chunks if c["doc_kind"] in BASE_KINDS]
-        dec = [c for c in chunks if c["doc_kind"] == "DECISION"]
         base, _ = build_rankings(chunks, qid, {})
         r, forced = {"g": base["g"]}, {"g": 0}
         specs = [("k2", "v1", set(), BONUS), ("k2v3", "v3", set(), BONUS),
                  *((n, "v3", set(excluded[n]), BONUS) for n in THRESHOLDS),
                  ("k1", "v1", set(), EXTRA["k1"]), ("k3", "v1", set(), EXTRA["k3"])]
         for name, tv, drop, bonus in specs:
-            ov = overlap(tv, qid, drop)
-            r_cs, n_cs = rank_forced(cs, ov, bonus)
-            r_dec, n_dec = rank_forced(dec, ov, bonus)
-            r[name] = rank_split(by_score(r_cs + r_dec), [], qid)
-            forced[name] = n_cs + n_dec
+            r[name], forced[name] = rank_concept(chunks, qid, tags[tv], drop, bonus)
             if not (tags[tv]["query"].get(qid, set()) - drop):  # 남은 조항 개념 0개 → g 와 같아야 함
                 assert [x["case_key"] for x in r[name]] == [x["case_key"] for x in base["g"]], f"{qid} {name}"
         rank.forced = forced  # 마지막 질문의 강제 포함 수 (아래 루프에서 바로 읽음)

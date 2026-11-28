@@ -40,16 +40,19 @@ def is_decision(r: dict) -> bool:
     return r["case_key"].startswith("D")
 
 
-def rank_split(ranked: list[dict], fills: list[str], qid: str) -> list[dict]:
-    """d) b 순위에서 CASE·STANDARD 7 + DECISION 3 (모자라면 다른 쪽으로 채움) → 점수순, 나머지는 뒤에 점수순."""
+def rank_split(ranked: list[dict], fills: list[str], qid: str,
+               n_base: int = SPLIT_BASE, n_dec: int = SPLIT_DECISION) -> list[dict]:
+    """d) b 순위에서 CASE·STANDARD 7 + DECISION 3 (모자라면 다른 쪽으로 채움) → 점수순, 나머지는 뒤에 점수순.
+    n_base·n_dec 를 바꾸면 상위 n_base + n_dec 개를 같은 규칙으로 고른다 (기본값 7 + 3 = TOP_K)."""
+    top_k = n_base + n_dec
     base = [r for r in ranked if not is_decision(r)]
     dec = [r for r in ranked if is_decision(r)]
-    nb, nd = min(SPLIT_BASE, len(base)), min(SPLIT_DECISION, len(dec))
-    if nb < SPLIT_BASE:
-        nd = min(len(dec), TOP_K - nb)
-    if nd < SPLIT_DECISION:
-        nb = min(len(base), TOP_K - nd)
-    if (nb, nd) != (SPLIT_BASE, SPLIT_DECISION):
+    nb, nd = min(n_base, len(base)), min(n_dec, len(dec))
+    if nb < n_base:
+        nd = min(len(dec), top_k - nb)
+    if nd < n_dec:
+        nb = min(len(base), top_k - nd)
+    if (nb, nd) != (n_base, n_dec):
         fills.append(f"{qid}: CASE·STANDARD {nb} + DECISION {nd} (후보 {len(base)}/{len(dec)})")
     top = base[:nb] + dec[:nd]
     chosen = {r["case_key"] for r in top}
@@ -251,8 +254,9 @@ def build_rankings(chunks: list[dict], qid: str, fills: dict[str, list[str]]) ->
     return r, pools
 
 
-def score_all(queries: list[dict]):
-    """질문 임베딩(OpenAI 1회) + 청크 점수 (DB 읽기 전용). 반환: ({질문: 청크(CLAUSE 제외)}, 토큰, 키)."""
+def score_all(queries: list[dict], embed=None):
+    """질문 임베딩(OpenAI 1회) + 청크 점수 (DB 읽기 전용). 반환: ({질문: 청크(CLAUSE 제외)}, 토큰, 키).
+    embed: (client, texts) -> (벡터, 토큰). 캐시를 쓰려면 넘긴다 (기본 embed_texts)."""
     import openai
     key = openai_key()
     if not key:
@@ -260,7 +264,7 @@ def score_all(queries: list[dict]):
     mask = masker(key)
     client = openai.OpenAI(api_key=key, max_retries=3, timeout=120)
     try:
-        vecs, tokens = embed_texts(client, [q["query_text"] for q in queries])
+        vecs, tokens = (embed or embed_texts)(client, [q["query_text"] for q in queries])
     except openai.APIError as e:
         raise SystemExit(mask(f"API 실패: {type(e).__name__} {getattr(e, 'status_code', '')}")) from None
     conn = connect(load_env())
