@@ -185,19 +185,34 @@ def stage_run(label, params):
                          f"tune_read:{p['person_id']}", bm.READ_SCHEMA, max_tokens=4000)
         d["memory"] = ch.cut_memo(d["memory"], budget)
         return {"person_id": p["person_id"], "read_count": sum(s["read"] for s in sentences), "total": len(sentences),
-                "missed_units": missed_units, "sentences_cut": cut, "masked_terms": masked, "memo_budget": budget, **d}
+                "missed_units": missed_units, "sentences_cut": cut, "masked_terms": masked, "memo_budget": budget,
+                "seen": seen, **d}
+
+    # v9: 상은 메모 대신 '실제로 본 글'을 그대로 기억한다 (openbook). 본 글은 이미 정보가 덜어진 상태
+    openbook = set(params.get("openbook") or [])
 
     def one(p):
         r = read_one(p)
         mem = "\n".join(f"- {m}" for m in r["memory"]) or "(남은 것 없음)"
+        if p["knowledge"] in openbook:
+            mem = r["seen"] or "(남은 것 없음)"
         d = bm.call_json(ANS_PROMPT.format(card=answer_card(p), memory=mem, questions=qs),
                          f"tune_answer:{label}:{p['person_id']}", ANS_SCHEMA, max_tokens=1500)
         read = {k: r[k] for k in ("person_id", "read_count", "total", "missed_units", "sentences_cut", "masked_terms",
                                   "memo_budget", "memory")}
         return read, {"person_id": p["person_id"], "grades": grade(d["answers"])}
 
+    # 비용 절감: only 에 든 단계만 새로 돌리고 나머지는 reuse 실행의 읽기·답을 그대로 가져온다
+    only = set(params.get("only") or [])
+    reuse = params.get("reuse")
+    kept = []
+    if only and reuse:
+        rr = {json.loads(l)["person_id"]: json.loads(l) for l in (OUT / reuse / "reads.jsonl").read_text(encoding="utf-8").splitlines() if l.strip()}
+        ra = {json.loads(l)["person_id"]: json.loads(l) for l in (OUT / reuse / "answers.jsonl").read_text(encoding="utf-8").splitlines() if l.strip()}
+        kept = [(rr[p["person_id"]], ra[p["person_id"]]) for p in people if p["knowledge"] not in only]
+        people = [p for p in people if p["knowledge"] in only]
     with ThreadPoolExecutor(6) as pool:
-        res = list(pool.map(one, people))
+        res = list(pool.map(one, people)) + kept
     (out / "reads.jsonl").write_text("\n".join(json.dumps(r, ensure_ascii=False) for r, _ in res) + "\n", encoding="utf-8")
     (out / "answers.jsonl").write_text("\n".join(json.dumps(a, ensure_ascii=False) for _, a in res) + "\n", encoding="utf-8")
     summarize(label)
