@@ -188,8 +188,13 @@ def stage_run(label, params):
             budget = round(len(docs[p["path"]]["text"]) * ratio[p["knowledge"]] * (0.6 + 0.8 * dl))
         else:
             budget = round(ch.memo_budget(float(p["diligence"])) * scale.get(p["knowledge"], 1.0))
-        d = bm.call_json(ch.READ_PROMPT_V3.format(card=ch.card(p), path_name=ch.PATH_NAME[p["path"]], budget=budget, seen=seen),
-                         f"tune_read:{p['person_id']}", bm.READ_SCHEMA, max_tokens=4000)
+        if p["knowledge"] in params.get("openbook", []):
+            # 본 글로 답하는 단계는 메모가 쓰이지 않으므로 메모 호출을 건너뛴다 (비용 절감)
+            d = {"first_impression": "", "memory": [], "hard_parts": []}
+        else:
+            d = bm.call_json(ch.READ_PROMPT_V3.format(card=ch.card(p), path_name=ch.PATH_NAME[p["path"]], budget=budget,
+                                                      seen=seen),
+                             f"tune_read:{p['person_id']}", bm.READ_SCHEMA, max_tokens=4000)
         d["memory"] = ch.cut_memo(d["memory"], budget)
         return {"person_id": p["person_id"], "read_count": sum(s["read"] for s in sentences), "total": len(sentences),
                 "missed_units": missed_units, "sentences_cut": cut, "masked_terms": masked, "memo_budget": budget,
