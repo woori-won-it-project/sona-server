@@ -145,8 +145,31 @@ def stage_run(label, params):
 
     scale = params.get("memo_scale") or {}
     ratio = params.get("memo_ratio") or {}
+    # v7: 용어 이해 단계별 읽기 보정 — 문장 읽힘 기본 확률(0.70 + 0.25 x 꼼꼼함)에 더한다
+    read_bonus = params.get("read_bonus") or {}
+    # v7: 답하기 습관 — 답할 때 소개 글에만 붙인다 (메모 습관과 같은 방식)
+    answer_habit = params.get("answer_habit") or {}
+    import threading
+    tl = threading.local()
+    if not hasattr(bp, "_orig_read_probability"):
+        bp._orig_read_probability = bp.read_probability
+
+    def read_probability(i, n, s, diligence, disposition):
+        p, fmt, kind = bp._orig_read_probability(i, n, s, diligence, disposition)
+        bonus = getattr(tl, "bonus", 0.0)
+        if bonus:
+            base = bp.RULES["budget_base"] + bp.RULES["budget_slope"] * diligence
+            p = min(1.0, p * (base + bonus) / base)
+        return p, fmt, kind
+
+    bp.read_probability = read_probability
+
+    def answer_card(p):
+        h = answer_habit.get(p["knowledge"])
+        return ORIG_CARD(p) + ("\n답하는 습관: " + h if h else "")
 
     def read_one(p):
+        tl.bonus = read_bonus.get(p["knowledge"], 0.0)
         # c_hybrid.read_one 과 같고, 메모 한도에 용어 이해 단계별 배수(memo_scale)만 곱한다
         sentences = bp.read_text(p, "C_DOC", docs[p["path"]]["text"])
         missed_units = ch.hide_content_units(p, sentences)
@@ -167,7 +190,7 @@ def stage_run(label, params):
     def one(p):
         r = read_one(p)
         mem = "\n".join(f"- {m}" for m in r["memory"]) or "(남은 것 없음)"
-        d = bm.call_json(ANS_PROMPT.format(card=ORIG_CARD(p), memory=mem, questions=qs),
+        d = bm.call_json(ANS_PROMPT.format(card=answer_card(p), memory=mem, questions=qs),
                          f"tune_answer:{label}:{p['person_id']}", ANS_SCHEMA, max_tokens=1500)
         read = {k: r[k] for k in ("person_id", "read_count", "total", "missed_units", "sentences_cut", "masked_terms",
                                   "memo_budget", "memory")}
