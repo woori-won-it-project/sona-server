@@ -1,0 +1,117 @@
+[
+ {
+  "fact_id": "R1",
+  "options": [
+   {
+    "text": "네, 암 수술 후 면역·통증완화 치료도 해당합니다.",
+    "correct": false,
+    "critical": true,
+    "key": "A"
+   },
+   {
+    "text": "네, 항암·방사선치료와 병행한 면역치료도 해당합니다.",
+    "correct": false,
+    "critical": true,
+    "key": "B"
+   },
+   {
+    "text": "아니요, 면역력 강화·후유증 치료는 해당하지 않습니다.",
+    "correct": true,
+    "critical": false,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "R2",
+  "options": [
+   {
+    "text": "암 치료 후 후유증·합병증 치료도 암주요치료비 대상이다",
+    "correct": false,
+    "critical": true,
+    "key": "A"
+   },
+   {
+    "text": "면역력 강화와 후유증·합병증 치료는 암주요치료에서 제외된다",
+    "correct": true,
+    "critical": false,
+    "key": "B"
+   },
+   {
+    "text": "면역치료도 암의 직접 치료에 해당해 암주요치료비 대상이다",
+    "correct": false,
+    "critical": true,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "R3",
+  "options": [
+   {
+    "text": "계약 1년이 지난 뒤 치료하면 최초 진단이 첫해여도 각 차년도 지급액 전액을 지급한다",
+    "correct": false,
+    "critical": true,
+    "key": "A"
+   },
+   {
+    "text": "암보장개시일 이후 진단이면 계약 첫해 진단이어도 각 차년도 지급액 전액을 지급한다",
+    "correct": false,
+    "critical": true,
+    "key": "B"
+   },
+   {
+    "text": "진단 시점이 기준이므로 지급기간 중 각 차년도 지급액의 50%를 지급한다",
+    "correct": true,
+    "critical": false,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "R4",
+  "options": [
+   {
+    "text": "각 차년도별 암주요치료비는 500만원 지급",
+    "correct": true,
+    "critical": false,
+    "key": "A"
+   },
+   {
+    "text": "암보장개시일 이후 진단이므로 각 차년도별 1,000만원 지급",
+    "correct": false,
+    "critical": true,
+    "key": "B"
+   },
+   {
+    "text": "치료 시점이 계약 1년 이후이므로 각 차년도별 1,000만원 지급",
+    "correct": false,
+    "critical": true,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "R5",
+  "options": [
+   {
+    "text": "보험기간 종료 전 암보장개시일 이후 암 등으로 최초 진단확정된 경우",
+    "correct": true,
+    "critical": false,
+    "key": "A"
+   },
+   {
+    "text": "허혈성심질환 진단비를 1회 받은 뒤 계약이 갱신된 경우",
+    "correct": false,
+    "critical": true,
+    "key": "B"
+   },
+   {
+    "text": "실제 만 나이가 80세이고 보험나이가 81세인 경우",
+    "correct": false,
+    "critical": true,
+    "key": "C"
+   }
+  ]
+ }
+]

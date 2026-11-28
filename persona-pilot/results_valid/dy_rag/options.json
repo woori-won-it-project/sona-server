@@ -1,0 +1,117 @@
+[
+ {
+  "fact_id": "R1",
+  "options": [
+   {
+    "text": "암 수술은 포함되지만 항암·방사선치료는 암 주요치료에 포함되지 않습니다.",
+    "correct": false,
+    "critical": false,
+    "key": "A"
+   },
+   {
+    "text": "항암·방사선치료와 병행한 면역치료도 암 주요치료에 포함됩니다.",
+    "correct": false,
+    "critical": true,
+    "key": "B"
+   },
+   {
+    "text": "면역력 강화·암 후유증·합병증 치료는 암 주요치료에 포함되지 않습니다.",
+    "correct": true,
+    "critical": false,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "R2",
+  "options": [
+   {
+    "text": "면역력 강화와 후유증·합병증 치료는 암주요치료비 대상에서 제외됩니다.",
+    "correct": true,
+    "critical": false,
+    "key": "A"
+   },
+   {
+    "text": "면역치료와 후유증·합병증 치료는 암주요치료비 대상에 포함됩니다.",
+    "correct": false,
+    "critical": true,
+    "key": "B"
+   },
+   {
+    "text": "면역력 강화와 후유증 치료는 입원 중인 경우에만 암주요치료비 대상입니다.",
+    "correct": false,
+    "critical": false,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "R3",
+  "options": [
+   {
+    "text": "1년 전 최초 진단이면 이후 치료 시 첫 차년도 지급액만 50%를 지급한다",
+    "correct": false,
+    "critical": false,
+    "key": "A"
+   },
+   {
+    "text": "1년 전 최초 진단이면 이후 치료 시 차년도 지급액의 50%를 지급한다",
+    "correct": true,
+    "critical": false,
+    "key": "B"
+   },
+   {
+    "text": "보장개시 후 진단이면 첫해 진단도 이후 차년도 지급액 전액을 지급한다",
+    "correct": false,
+    "critical": true,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "R4",
+  "options": [
+   {
+    "text": "각 차년도 암주요치료비는 매년 250만원 지급",
+    "correct": false,
+    "critical": false,
+    "key": "A"
+   },
+   {
+    "text": "각 차년도 암주요치료비는 매년 1,000만원 지급",
+    "correct": false,
+    "critical": true,
+    "key": "B"
+   },
+   {
+    "text": "각 차년도 암주요치료비는 매년 500만원 지급",
+    "correct": true,
+    "critical": false,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "R5",
+  "options": [
+   {
+    "text": "보험기간 종료 전 암보장개시일 전후와 무관하게 암 진단되면 자동갱신되지 않는다",
+    "correct": false,
+    "critical": false,
+    "key": "A"
+   },
+   {
+    "text": "보험나이 81세가 되거나 허혈성심질환 진단비를 받으면 자동갱신되지 않는다",
+    "correct": false,
+    "critical": false,
+    "key": "B"
+   },
+   {
+    "text": "보험기간 종료 전 암보장개시일 이후 암 등으로 최초 진단되면 자동갱신되지 않는다",
+    "correct": true,
+    "critical": false,
+    "key": "C"
+   }
+  ]
+ }
+]
