@@ -37,6 +37,10 @@ ch = load("c_hybrid", "c_hybrid.py")
 bm, bp = ch.bm, ch.bp
 ORIG_CARD = ch.card
 FACTS = json.loads((ROOT / "results_b" / "facts.json").read_text(encoding="utf-8"))
+# 2026-11-28 모델 전환 후: results_tune/facts.json 이 있으면 그 질문을 쓴다 (F3·F4 질문 초점 바꿈. results_b 원본은 기록으로 둠)
+if (OUT / "facts.json").exists():
+    FACTS = json.loads((OUT / "facts.json").read_text(encoding="utf-8"))
+    ch.CONTENT_UNITS["주요치료와 무관한 비용"] = r"진찰료|입원료|마취료|검사료"
 # 보기: results_tune/options.json (찍기 검사를 통과한 보기)이 있으면 그것을, 없으면 c_mc 보기에서 '모르겠다'(D)를 뺀 것
 OPT_FILE = ROOT / "results_tune" / "options.json"
 
@@ -51,6 +55,9 @@ def load_opts():
 OPTS = load_opts()
 # 읽지 않고도 맞히는 상식 문항 (찍기 검사 60% 초과). 정답률 집계에서 뺀다 (F6 갱신 보험료 인상: 찍기 100%)
 COMMON_SENSE = {"F6"}
+# 2026-11-28 모델 전환 후: results_tune/guess.json (현재 모델로 잰 찍기 검사) 이 있으면 60% 초과 문항을 상식 문항으로 본다
+if (OUT / "guess.json").exists():
+    COMMON_SENSE = {k for k, v in json.loads((OUT / "guess.json").read_text(encoding="utf-8")).items() if v > 0.6}
 
 # 현재 값 (C안 v4). --set 으로 바꾼다
 DEFAULTS = {

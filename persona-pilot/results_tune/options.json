@@ -26,21 +26,21 @@
   "fact_id": "F2",
   "options": [
    {
-    "text": "1년 경과 전 진단이면 1,000만원만 지급, 첫해만 감액",
+    "text": "매년 지급액의 50%가 지급되며, 계약 후 첫해만 감액됩니다",
     "correct": false,
     "critical": true,
     "key": "A"
    },
    {
-    "text": "1년 경과 전 진단이면 50%만 지급, 지급기간 내내 감액",
+    "text": "매년 지급액의 50%가 지급되며, 지급기간 내내 감액됩니다",
     "correct": true,
     "critical": false,
     "key": "B"
    },
    {
-    "text": "1년 경과 전 진단이면 25%만 지급, 지급기간 내내 감액",
+    "text": "매년 지급액의 50%가 지급되며, 최초 1회에만 감액됩니다",
     "correct": false,
-    "critical": false,
+    "critical": true,
     "key": "C"
    }
   ]
@@ -49,19 +49,19 @@
   "fact_id": "F3",
   "options": [
    {
-    "text": "합병증 치료와 호르몬 치료제 비용도 암주요치료비 대상이 됨",
+    "text": "항암치료 중 입원료·마취료·검사료는 암주요치료비로 인정됩니다",
     "correct": false,
     "critical": true,
     "key": "A"
    },
    {
-    "text": "항암약물치료와 진찰료 비용은 암주요치료비 대상이 아님",
+    "text": "수술 중 입원료·마취료·검사료는 암주요치료비로 인정됩니다",
     "correct": false,
-    "critical": false,
+    "critical": true,
     "key": "B"
    },
    {
-    "text": "합병증 치료와 호르몬 치료제 비용은 암주요치료비 대상이 아님",
+    "text": "수술 중 입원료·마취료·검사료는 암주요치료비로 인정되지 않습니다",
     "correct": true,
     "critical": false,
     "key": "C"
@@ -72,21 +72,21 @@
   "fact_id": "F4",
   "options": [
    {
-    "text": "처음 암 진단확정일부터 10년이며, 다른 암 진단 시 재설정",
+    "text": "최초 진단확정일부터 10차년도 말일까지 지급기간으로 봅니다.",
     "correct": false,
     "critical": true,
     "key": "A"
    },
    {
-    "text": "처음 암 진단확정일부터 10년이며, 다른 암 진단에도 유지",
+    "text": "최초 진단확정일부터 10차년도 치료일까지 지급기간으로 봅니다.",
     "correct": true,
     "critical": false,
     "key": "B"
    },
    {
-    "text": "최초 계약일부터 10년이며, 다른 암 진단에도 유지",
+    "text": "최초 진단확정일부터 10년 경과일까지 지급기간으로 봅니다.",
     "correct": false,
-    "critical": false,
+    "critical": true,
     "key": "C"
    }
   ]
@@ -118,19 +118,19 @@
   "fact_id": "F6",
   "options": [
    {
-    "text": "갱신 시 보험료는 10년만기 도래 등에 따라 인상될 수 있음",
+    "text": "19,470원 보험료는 갱신 시 1년 경과로 오를 수 있습니다",
     "correct": false,
     "critical": false,
     "key": "A"
    },
    {
-    "text": "갱신 시 보험료는 연령 증가 등에 따라 인상될 수 있음",
+    "text": "19,470원 보험료는 갱신 시 연령 증가로 오를 수 있습니다",
     "correct": true,
     "critical": false,
     "key": "B"
    },
    {
-    "text": "갱신 시 보험료는 가입금액 증액 등에 따라 인상될 수 있음",
+    "text": "19,470원 보험료는 갱신 시 10년 만기로 오를 수 있습니다",
     "correct": false,
     "critical": false,
     "key": "C"

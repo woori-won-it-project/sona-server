@@ -3,19 +3,19 @@
   "fact_id": "W1",
   "options": [
    {
-    "text": "기본 100%, 납입보험료, 현재 적립액 101% 중 큰 금액",
+    "text": "가입액 100%, 납입보험료, 직전 적립액 200% 중 큰 금액",
     "correct": false,
-    "critical": false,
+    "critical": true,
     "key": "A"
    },
    {
-    "text": "기본 200%, 납입보험료, 직전 적립액 101% 중 큰 금액",
+    "text": "가입액 100%, 납입보험료, 직전 적립액 100% 중 큰 금액",
     "correct": false,
-    "critical": true,
+    "critical": false,
     "key": "B"
    },
    {
-    "text": "기본 100%, 납입보험료, 직전 적립액 101% 중 큰 금액",
+    "text": "가입액 100%, 납입보험료, 직전 적립액 101% 중 큰 금액",
     "correct": true,
     "critical": false,
     "key": "C"
@@ -26,19 +26,19 @@
   "fact_id": "W10",
   "options": [
    {
-    "text": "기본 적립액에서 우선 빼고, 부족할 때만 추가납입 적립액에서 뺀다.",
+    "text": "중도인출은 기본분 우선, 부족액은 추가납입분에서 뺀다",
     "correct": false,
     "critical": false,
     "key": "A"
    },
    {
-    "text": "추가납입 적립액에서 우선 빼고, 부족할 때만 기본 적립액에서 뺀다.",
+    "text": "중도인출은 추가납입분 우선, 부족액은 기본분에서 뺀다",
     "correct": true,
     "critical": false,
     "key": "B"
    },
    {
-    "text": "추가납입 적립액에서 우선 빼고, 부족할 때만 해약공제액에서 뺀다.",
+    "text": "중도인출은 기본분과 추가납입분에서 절반씩 뺀다",
     "correct": false,
     "critical": false,
     "key": "C"
@@ -49,21 +49,21 @@
   "fact_id": "W11",
   "options": [
    {
-    "text": "여성 피보험자에게만 C50을 유방암으로 본다",
+    "text": "여성 피보험자에게만 C50을 유방암으로 보아 적용한다",
     "correct": true,
     "critical": false,
     "key": "A"
    },
    {
-    "text": "남녀 모든 피보험자에게 C50을 유방암으로 본다",
+    "text": "남성 피보험자에게만 C50을 유방암으로 보아 적용한다",
     "correct": false,
     "critical": true,
     "key": "B"
    },
    {
-    "text": "남성 피보험자에게만 C50을 유방암으로 본다",
+    "text": "남녀 피보험자 모두에게 C50을 유방암으로 보아 적용한다",
     "correct": false,
-    "critical": false,
+    "critical": true,
     "key": "C"
    }
   ]
@@ -72,19 +72,19 @@
   "fact_id": "W12",
   "options": [
    {
-    "text": "보장개시일 이후 최초 진단확정 시 당회차 보험료 면제",
+    "text": "납입기간 중 계약일 이후 최초 진단 시 차회분부터 면제",
     "correct": false,
     "critical": true,
     "key": "A"
    },
    {
-    "text": "보장개시일 이후 최초 진단확정 시 차회 이후 보험료 면제",
+    "text": "납입기간 중 보장개시일 이후 최초 진단 시 차회분부터 면제",
     "correct": true,
     "critical": false,
     "key": "B"
    },
    {
-    "text": "계약일로부터 1년 이후 최초 진단확정 시 차회 이후 보험료 면제",
+    "text": "납입기간 중 보장개시일 이후 최초 진단 시 당회분부터 면제",
     "correct": false,
     "critical": true,
     "key": "C"
@@ -95,19 +95,19 @@
   "fact_id": "W13",
   "options": [
    {
-    "text": "보험금 지급기간 후 사망 시 사망 당시 계약자적립액 지급",
+    "text": "지급기간 내 사망 시 진단 당시 계약자적립액을 계약자에게 지급",
     "correct": false,
     "critical": true,
     "key": "A"
    },
    {
-    "text": "보험금 지급기간 내 사망 시 사망 당시 계약자적립액 지급",
+    "text": "지급기간 내 사망 시 사망 당시 계약자적립액을 계약자에게 지급",
     "correct": true,
     "critical": false,
     "key": "B"
    },
    {
-    "text": "보험금 지급기간 내 사망 시 특약 보험가입금액 지급",
+    "text": "지급기간 내 사망 시 사망 당시 특약가입금액을 계약자에게 지급",
     "correct": false,
     "critical": true,
     "key": "C"
@@ -118,19 +118,19 @@
   "fact_id": "W14",
   "options": [
    {
-    "text": "무사고보너스적립액은 중도인출이 불가하다",
+    "text": "무사고보너스적립액은 중도인출 대상에 포함되지 않는다",
     "correct": true,
     "critical": false,
     "key": "A"
    },
    {
-    "text": "무사고보너스적립액도 보험연도 연12회 중도인출이 가능하다",
+    "text": "무사고보너스적립액은 보험연도 기준 연 12회 인출할 수 있다",
     "correct": false,
     "critical": true,
     "key": "B"
    },
    {
-    "text": "무사고보너스적립액은 1회당 50% 이하 인출이 가능하다",
+    "text": "무사고보너스적립액은 1회당 적립액의 50%까지 인출할 수 있다",
     "correct": false,
     "critical": true,
     "key": "C"
@@ -141,19 +141,19 @@
   "fact_id": "W2",
   "options": [
    {
-    "text": "납입경과 1년(12회) 후부터 연 12회까지 인출",
+    "text": "납입 12회 경과 후부터 보험연도별 연 12회 인출 가능",
     "correct": false,
     "critical": true,
     "key": "A"
    },
    {
-    "text": "납입경과 2년(24회) 후부터 연 12회까지 인출",
+    "text": "납입 24회 경과 후부터 보험연도별 연 12회 인출 가능",
     "correct": true,
     "critical": false,
     "key": "B"
    },
    {
-    "text": "납입경과 3년(36회) 후부터 연 6회까지 인출",
+    "text": "납입 24회 경과 후부터 보험연도별 연 10회 인출 가능",
     "correct": false,
     "critical": false,
     "key": "C"
@@ -164,19 +164,19 @@
   "fact_id": "W3",
   "options": [
    {
-    "text": "해약공제 차감액의 50% 이하, 1만원 이상 만원 단위",
+    "text": "공제 후 적립액의 50% 이하, 5만원부터 만원 단위 인출",
     "correct": false,
     "critical": true,
     "key": "A"
    },
    {
-    "text": "해약공제 차감액의 50% 이하, 10만원 이상 만원 단위",
+    "text": "공제 후 적립액의 50% 이하, 10만원부터 만원 단위 인출",
     "correct": true,
     "critical": false,
     "key": "B"
    },
    {
-    "text": "해약공제 차감액의 30% 이하, 10만원 이상 만원 단위",
+    "text": "공제 후 적립액의 30% 이하, 10만원부터 만원 단위 인출",
     "correct": false,
     "critical": false,
     "key": "C"
@@ -187,19 +187,19 @@
   "fact_id": "W4",
   "options": [
    {
-    "text": "계약일부터 180일 미만 진단 시 특약 가입금액의 10% 지급",
+    "text": "계약 1년 미만 진단이면 특약가입금액의 10% 지급",
     "correct": false,
     "critical": false,
     "key": "A"
    },
    {
-    "text": "계약일부터 1년 이상 진단 시 특약 가입금액의 100% 지급",
+    "text": "계약 1년 미만 진단이면 특약가입금액의 100% 지급",
     "correct": false,
     "critical": true,
     "key": "B"
    },
    {
-    "text": "계약일부터 1년 미만 진단 시 특약 가입금액의 50% 지급",
+    "text": "계약 1년 미만 진단이면 특약가입금액의 50% 지급",
     "correct": true,
     "critical": false,
     "key": "C"
@@ -210,19 +210,19 @@
   "fact_id": "W5",
   "options": [
    {
-    "text": "중증 기타피부암 진단확정 시 '암' 진단비가 지급된다",
+    "text": "약관상 기타피부암으로 진단되면 ‘암’ 진단비가 지급된다",
     "correct": false,
     "critical": true,
     "key": "A"
    },
    {
-    "text": "중증 갑상선암 진단확정 시 '암' 진단비가 지급된다",
+    "text": "약관상 중증 갑상선암으로 진단되면 ‘암’ 진단비가 지급된다",
     "correct": true,
     "critical": false,
     "key": "B"
    },
    {
-    "text": "일반 갑상선암 진단확정 시 '암' 진단비가 지급된다",
+    "text": "약관상 일반 갑상선암으로 진단되면 ‘암’ 진단비가 지급된다",
     "correct": false,
     "critical": true,
     "key": "C"
@@ -233,19 +233,19 @@
   "fact_id": "W6",
   "options": [
    {
-    "text": "부활일로부터 180일이 지난 다음 날부터 암 보장 시작",
+    "text": "부활일을 포함해 180일 경과한 다음 날부터 암 보장이 시작된다",
     "correct": false,
     "critical": false,
     "key": "A"
    },
    {
-    "text": "부활일로부터 30일이 지난 다음 날부터 암 보장 시작",
+    "text": "부활일을 포함해 30일 경과한 다음 날부터 암 보장이 시작된다",
     "correct": false,
     "critical": true,
     "key": "B"
    },
    {
-    "text": "부활일로부터 90일이 지난 다음 날부터 암 보장 시작",
+    "text": "부활일을 포함해 90일 경과한 다음 날부터 암 보장이 시작된다",
     "correct": true,
     "critical": false,
     "key": "C"
@@ -256,19 +256,19 @@
   "fact_id": "W7",
   "options": [
    {
-    "text": "최초 진단확정일부터 11차년도 주요치료일까지로 본다",
+    "text": "최초 확정일부터 10차년도 마지막 날까지가 지급기간이다",
     "correct": false,
     "critical": true,
     "key": "A"
    },
    {
-    "text": "최초 진단확정일부터 10년이 지나는 날까지로 본다",
+    "text": "최초 확정일부터 10차년도 첫날까지가 지급기간이다",
     "correct": false,
     "critical": false,
     "key": "B"
    },
    {
-    "text": "최초 진단확정일부터 10차년도 주요치료일까지로 본다",
+    "text": "최초 확정일부터 10차년도 주요치료일까지가 지급기간이다",
     "correct": true,
     "critical": false,
     "key": "C"
@@ -302,19 +302,19 @@
   "fact_id": "W9",
   "options": [
    {
-    "text": "인출 후 계약자적립액이 기본보험료 12배 미만이면 불가",
+    "text": "월납은 인출 뒤 적립액이 보험료의 12배 미만이면 인출할 수 없다",
     "correct": false,
     "critical": true,
     "key": "A"
    },
    {
-    "text": "인출 후 계약자적립액이 기본보험료 24배 미만이면 불가",
+    "text": "월납은 인출 뒤 적립액이 보험료의 24배 미만이면 인출할 수 없다",
     "correct": true,
     "critical": false,
     "key": "B"
    },
    {
-    "text": "인출 후 계약자적립액이 기본보험료 36배 미만이면 불가",
+    "text": "월납은 인출 뒤 적립액이 보험료의 30배 미만이면 인출할 수 없다",
     "correct": false,
     "critical": false,
     "key": "C"
