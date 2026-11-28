@@ -190,12 +190,19 @@ def stage_run(label, params):
 
     # v9: 상은 메모 대신 '실제로 본 글'을 그대로 기억한다 (openbook). 본 글은 이미 정보가 덜어진 상태
     openbook = set(params.get("openbook") or [])
+    keep_rate = params.get("openbook_keep") or {}
 
     def one(p):
         r = read_one(p)
         mem = "\n".join(f"- {m}" for m in r["memory"]) or "(남은 것 없음)"
         if p["knowledge"] in openbook:
-            mem = r["seen"] or "(남은 것 없음)"
+            lines = (r["seen"] or "").splitlines()
+            keep = keep_rate.get(p["knowledge"], 1.0)
+            if keep < 1.0:
+                # v10: 본 글 중 일부 문장만 기억 (사람·문장마다 시드로 고정)
+                lines = [ln for i, ln in enumerate(lines)
+                         if bp.sentence_rng(int(p["seed"]), "C_KEEP:" + ln, i).random() < keep]
+            mem = "\n".join(lines) or "(남은 것 없음)"
         d = bm.call_json(ANS_PROMPT.format(card=answer_card(p), memory=mem, questions=qs),
                          f"tune_answer:{label}:{p['person_id']}", ANS_SCHEMA, max_tokens=1500)
         read = {k: r[k] for k in ("person_id", "read_count", "total", "missed_units", "sentences_cut", "masked_terms",
