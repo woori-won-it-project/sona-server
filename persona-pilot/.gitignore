@@ -1,0 +1,4 @@
+# 실제 보험사 PDF는 커밋하지 않는다 (docs/agent.md 금지 사항, 레포 public)
+# 파일럿을 다시 돌리려면 동양생명 무배당엔젤New독특한암치료보험(갱신형) 약관·상품설명서를
+# 공시실에서 받아 data/raw/terms.pdf, data/raw/guide.pdf 로 둔다.
+data/raw/

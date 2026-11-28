@@ -1,0 +1,140 @@
+[
+ {
+  "fact_id": "F1",
+  "options": [
+   {
+    "text": "연 1회 5,000만원, 최초 진단 후 10년간 최대 10회",
+    "correct": false,
+    "critical": true,
+    "key": "A"
+   },
+   {
+    "text": "연 1회 2,000만원, 최초 진단 후 10년간 최대 10회",
+    "correct": true,
+    "critical": false,
+    "key": "B"
+   },
+   {
+    "text": "연 1회 1,000만원, 최초 진단 후 10년간 최대 10회",
+    "correct": false,
+    "critical": false,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "F2",
+  "options": [
+   {
+    "text": "정해진 지급금액의 30%만 지급, 보험금 지급기간 내내 감액",
+    "correct": false,
+    "critical": false,
+    "key": "A"
+   },
+   {
+    "text": "정해진 지급금액의 50%만 지급, 보험금 지급기간 내내 감액",
+    "correct": true,
+    "critical": false,
+    "key": "B"
+   },
+   {
+    "text": "정해진 지급금액의 50%만 지급, 1차년도에 한해 감액",
+    "correct": false,
+    "critical": true,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "F3",
+  "options": [
+   {
+    "text": "합병증 치료비는 1년 후, 호르몬 치료제는 대상이 됨",
+    "correct": false,
+    "critical": true,
+    "key": "A"
+   },
+   {
+    "text": "합병증 치료와 호르몬 치료제 비용은 보험금 대상이 됨",
+    "correct": false,
+    "critical": true,
+    "key": "B"
+   },
+   {
+    "text": "합병증 치료와 호르몬 치료제 비용은 보험금 대상이 아님",
+    "correct": true,
+    "critical": false,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "F4",
+  "options": [
+   {
+    "text": "처음 암 진단확정일부터 10년이며, 다른 암 진단 시 재설정",
+    "correct": false,
+    "critical": true,
+    "key": "A"
+   },
+   {
+    "text": "처음 암 진단확정일부터 10년이며, 다른 암 진단에도 유지",
+    "correct": true,
+    "critical": false,
+    "key": "B"
+   },
+   {
+    "text": "최초 계약일부터 10년이며, 다른 암 진단에도 유지",
+    "correct": false,
+    "critical": false,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "F5",
+  "options": [
+   {
+    "text": "해약환급금 745,530원, 납입보험료의 45.58%",
+    "correct": false,
+    "critical": true,
+    "key": "A"
+   },
+   {
+    "text": "해약환급금 0원, 납입보험료의 0.00%",
+    "correct": false,
+    "critical": false,
+    "key": "B"
+   },
+   {
+    "text": "해약환급금 93,030원, 납입보험료의 13.27%",
+    "correct": true,
+    "critical": false,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "F6",
+  "options": [
+   {
+    "text": "갱신 보험료는 10년만기 계약에서만 인상될 수 있음",
+    "correct": false,
+    "critical": true,
+    "key": "A"
+   },
+   {
+    "text": "갱신 보험료는 연령 증가 등에 따라 인상될 수 있음",
+    "correct": true,
+    "critical": false,
+    "key": "B"
+   },
+   {
+    "text": "갱신 보험료는 가입 후 90일 지나면 인상될 수 있음",
+    "correct": false,
+    "critical": false,
+    "key": "C"
+   }
+  ]
+ }
+]

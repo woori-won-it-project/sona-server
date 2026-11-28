@@ -1,0 +1,324 @@
+[
+ {
+  "fact_id": "W1",
+  "options": [
+   {
+    "text": "기본 100%, 납입보험료, 현재 적립액 101% 중 큰 금액",
+    "correct": false,
+    "critical": false,
+    "key": "A"
+   },
+   {
+    "text": "기본 200%, 납입보험료, 직전 적립액 101% 중 큰 금액",
+    "correct": false,
+    "critical": true,
+    "key": "B"
+   },
+   {
+    "text": "기본 100%, 납입보험료, 직전 적립액 101% 중 큰 금액",
+    "correct": true,
+    "critical": false,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "W10",
+  "options": [
+   {
+    "text": "기본 적립액에서 우선 빼고, 부족할 때만 추가납입 적립액에서 뺀다.",
+    "correct": false,
+    "critical": false,
+    "key": "A"
+   },
+   {
+    "text": "추가납입 적립액에서 우선 빼고, 부족할 때만 기본 적립액에서 뺀다.",
+    "correct": true,
+    "critical": false,
+    "key": "B"
+   },
+   {
+    "text": "추가납입 적립액에서 우선 빼고, 부족할 때만 해약공제액에서 뺀다.",
+    "correct": false,
+    "critical": false,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "W11",
+  "options": [
+   {
+    "text": "계약일로부터 180일 경과 이전 진단이면 가입금액의 10%를 지급한다.",
+    "correct": true,
+    "critical": false,
+    "key": "A"
+   },
+   {
+    "text": "계약일로부터 180일 경과 이전 진단이면 가입금액의 50%를 지급한다.",
+    "correct": false,
+    "critical": true,
+    "key": "B"
+   },
+   {
+    "text": "계약일로부터 180일 경과 이후 진단이면 가입금액의 10%를 지급한다.",
+    "correct": false,
+    "critical": false,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "W12",
+  "options": [
+   {
+    "text": "최초 진단확정 시 이 특약의 차회 이후 보험료가 환급된다",
+    "correct": false,
+    "critical": true,
+    "key": "A"
+   },
+   {
+    "text": "최초 진단확정 시 이 특약의 차회 이후 보험료가 면제된다",
+    "correct": true,
+    "critical": false,
+    "key": "B"
+   },
+   {
+    "text": "최초 진단확정 1년 후부터 이 특약의 보험료가 면제된다",
+    "correct": false,
+    "critical": false,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "W13",
+  "options": [
+   {
+    "text": "간병 목적의 2대질병 입원·통원·요양병원 치료",
+    "correct": false,
+    "critical": true,
+    "key": "A"
+   },
+   {
+    "text": "직접 치료 목적의 2대질병 수술·혈전용해·종합병원 중환자실",
+    "correct": true,
+    "critical": false,
+    "key": "B"
+   },
+   {
+    "text": "직접 치료 목적의 2대질병 수술·혈전용해·일반병원 중환자실",
+    "correct": false,
+    "critical": true,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "W14",
+  "options": [
+   {
+    "text": "무사고보너스적립액은 중도인출이 불가하다",
+    "correct": true,
+    "critical": false,
+    "key": "A"
+   },
+   {
+    "text": "무사고보너스적립액도 보험연도 연12회 중도인출이 가능하다",
+    "correct": false,
+    "critical": true,
+    "key": "B"
+   },
+   {
+    "text": "무사고보너스적립액은 1회당 50% 이하 인출이 가능하다",
+    "correct": false,
+    "critical": true,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "W2",
+  "options": [
+   {
+    "text": "납입경과 1년(12회) 후부터 연 12회까지 인출",
+    "correct": false,
+    "critical": true,
+    "key": "A"
+   },
+   {
+    "text": "납입경과 2년(24회) 후부터 연 12회까지 인출",
+    "correct": true,
+    "critical": false,
+    "key": "B"
+   },
+   {
+    "text": "납입경과 3년(36회) 후부터 연 6회까지 인출",
+    "correct": false,
+    "critical": false,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "W3",
+  "options": [
+   {
+    "text": "해약공제 차감액의 50% 이하, 1만원 이상 만원 단위",
+    "correct": false,
+    "critical": true,
+    "key": "A"
+   },
+   {
+    "text": "해약공제 차감액의 50% 이하, 10만원 이상 만원 단위",
+    "correct": true,
+    "critical": false,
+    "key": "B"
+   },
+   {
+    "text": "해약공제 차감액의 30% 이하, 10만원 이상 만원 단위",
+    "correct": false,
+    "critical": false,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "W4",
+  "options": [
+   {
+    "text": "계약일부터 180일 미만 진단 시 특약 가입금액의 10% 지급",
+    "correct": false,
+    "critical": false,
+    "key": "A"
+   },
+   {
+    "text": "계약일부터 1년 이상 진단 시 특약 가입금액의 100% 지급",
+    "correct": false,
+    "critical": true,
+    "key": "B"
+   },
+   {
+    "text": "계약일부터 1년 미만 진단 시 특약 가입금액의 50% 지급",
+    "correct": true,
+    "critical": false,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "W5",
+  "options": [
+   {
+    "text": "기타피부암은 암 정의에서 제외되어 50% 지급 대상임",
+    "correct": false,
+    "critical": true,
+    "key": "A"
+   },
+   {
+    "text": "기타피부암과 갑상선암은 암 정의에서 제외되어 지급 안 됨",
+    "correct": true,
+    "critical": false,
+    "key": "B"
+   },
+   {
+    "text": "중증 갑상선암은 암 정의에서 제외되어 지급 안 됨",
+    "correct": false,
+    "critical": false,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "W6",
+  "options": [
+   {
+    "text": "계약일부터 1년이 지난 날의 다음 날부터 보장함",
+    "correct": false,
+    "critical": false,
+    "key": "A"
+   },
+   {
+    "text": "계약일부터 180일이 지난 날의 다음 날부터 보장함",
+    "correct": false,
+    "critical": false,
+    "key": "B"
+   },
+   {
+    "text": "계약일부터 90일이 지난 날의 다음 날부터 보장함",
+    "correct": true,
+    "critical": false,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "W7",
+  "options": [
+   {
+    "text": "최초 진단 후 1년간, 연 1회씩 최대 10회 지급",
+    "correct": false,
+    "critical": false,
+    "key": "A"
+   },
+   {
+    "text": "최초 진단 후 10년간, 연 2회씩 최대 20회 지급",
+    "correct": false,
+    "critical": true,
+    "key": "B"
+   },
+   {
+    "text": "최초 진단 후 10년간, 연 1회씩 최대 10회 지급",
+    "correct": true,
+    "critical": false,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "W8",
+  "options": [
+   {
+    "text": "기본보험료 총액의 50% 범위 안에서만 추가납입이 가능하다.",
+    "correct": false,
+    "critical": false,
+    "key": "A"
+   },
+   {
+    "text": "기본보험료를 납입한 달에 한해 추가납입이 가능하다.",
+    "correct": true,
+    "critical": false,
+    "key": "B"
+   },
+   {
+    "text": "기본보험료 납입 여부와 상관없이 추가납입이 가능하다.",
+    "correct": false,
+    "critical": true,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "W9",
+  "options": [
+   {
+    "text": "총 인출금액은 실제 납입한 보험료 총액의 200%를 넘을 수 없다.",
+    "correct": false,
+    "critical": true,
+    "key": "A"
+   },
+   {
+    "text": "총 인출금액은 실제 납입한 보험료 총액을 넘을 수 없다.",
+    "correct": true,
+    "critical": false,
+    "key": "B"
+   },
+   {
+    "text": "총 인출금액은 계약자적립액 중 해약공제액을 넘을 수 없다.",
+    "correct": false,
+    "critical": false,
+    "key": "C"
+   }
+  ]
+ }
+]

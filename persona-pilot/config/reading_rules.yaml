@@ -1,0 +1,26 @@
+# 문장 단위 읽기 규칙 (모두 가정값)
+# 읽힘 확률 = B × 위치 × 형식 × 종류 (최대 1), B = budget_base + budget_slope × 꼼꼼함
+budget_base: 0.55
+budget_slope: 0.25
+
+position:
+  full_until: 0.30      # 글의 앞 30%는 1.0
+  end_factor: 0.70      # 끝으로 갈수록 0.7까지 선형 감소
+
+format:
+  heading: 1.3          # 제목·조 제목
+  aside: 0.5            # 괄호 안 문장·각주·※ 문장
+  bold_supported: false # PDF 텍스트에서 굵은 글씨를 구분하지 않음 (생략했다고 기록)
+
+kind:
+  coverage:
+    factor: 1.2
+    optimistic_factor: 1.4
+    keywords: ["지급", "보장", "드립니다", "드려요", "받을 수", "나옵니다"]
+  exception:
+    base: 0.6
+    slope: 0.4          # × (base + slope × 꼼꼼함)
+    cautious_extra: 1.2
+    keywords: ["다만", "제외", "지급하지", "감액", "면책", "않습니다", "한하여", "경우에 한", "보장하지"]
+
+first_sentence_always_read: true

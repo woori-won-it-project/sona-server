@@ -1,0 +1,176 @@
+[
+ {
+  "fact_id": "F1",
+  "options": [
+   {
+    "text": "연 1회 1,000만원씩 최대 10년간 10회 지급",
+    "correct": false,
+    "critical": false,
+    "key": "A"
+   },
+   {
+    "text": "연 1회 2,000만원씩 최대 10년간 10회 지급",
+    "correct": true,
+    "critical": false,
+    "key": "B"
+   },
+   {
+    "text": "연 2회 2,000만원씩 최대 10년간 20회 지급",
+    "correct": false,
+    "critical": true,
+    "key": "C"
+   },
+   {
+    "text": "모르겠다",
+    "correct": false,
+    "critical": false,
+    "key": "D"
+   }
+  ]
+ },
+ {
+  "fact_id": "F2",
+  "options": [
+   {
+    "text": "가입 1년 안에 진단되면 보험금이 지급되지 않음",
+    "correct": false,
+    "critical": false,
+    "key": "A"
+   },
+   {
+    "text": "가입 1년 안에 진단되면 지급금액의 50%만 지급",
+    "correct": true,
+    "critical": false,
+    "key": "B"
+   },
+   {
+    "text": "가입 1년 안에 진단되면 전액을 그대로 지급",
+    "correct": false,
+    "critical": true,
+    "key": "C"
+   },
+   {
+    "text": "모르겠다",
+    "correct": false,
+    "critical": false,
+    "key": "D"
+   }
+  ]
+ },
+ {
+  "fact_id": "F3",
+  "options": [
+   {
+    "text": "호르몬 치료제 비용은 암 치료비로 인정되어 보장",
+    "correct": false,
+    "critical": true,
+    "key": "A"
+   },
+   {
+    "text": "합병증 치료비도 암 치료와 같이 보장을 받음",
+    "correct": false,
+    "critical": true,
+    "key": "B"
+   },
+   {
+    "text": "합병증 치료와 호르몬 치료제 비용은 보장되지 않음",
+    "correct": true,
+    "critical": false,
+    "key": "C"
+   },
+   {
+    "text": "모르겠다",
+    "correct": false,
+    "critical": false,
+    "key": "D"
+   }
+  ]
+ },
+ {
+  "fact_id": "F4",
+  "options": [
+   {
+    "text": "지급기간은 새 암진단일부터 10년으로 다시 계산됨",
+    "correct": false,
+    "critical": true,
+    "key": "A"
+   },
+   {
+    "text": "지급기간은 최초 암진단일부터 10년으로 고정됨",
+    "correct": true,
+    "critical": false,
+    "key": "B"
+   },
+   {
+    "text": "지급기간은 최초 암진단일부터 5년으로 단축됨",
+    "correct": false,
+    "critical": false,
+    "key": "C"
+   },
+   {
+    "text": "모르겠다",
+    "correct": false,
+    "critical": false,
+    "key": "D"
+   }
+  ]
+ },
+ {
+  "fact_id": "F5",
+  "options": [
+   {
+    "text": "3년 해지 시 700,920원 전액을 돌려받음",
+    "correct": false,
+    "critical": true,
+    "key": "A"
+   },
+   {
+    "text": "3년 해지 시 해약환급금은 없이 계약 종료됨",
+    "correct": false,
+    "critical": false,
+    "key": "B"
+   },
+   {
+    "text": "3년 해지 시 93,030원, 납입보험료의 13.27%",
+    "correct": true,
+    "critical": false,
+    "key": "C"
+   },
+   {
+    "text": "모르겠다",
+    "correct": false,
+    "critical": false,
+    "key": "D"
+   }
+  ]
+ },
+ {
+  "fact_id": "F6",
+  "options": [
+   {
+    "text": "갱신 시에도 최초 계약 보험료가 그대로 유지됨",
+    "correct": false,
+    "critical": true,
+    "key": "A"
+   },
+   {
+    "text": "갱신 시 연령 증가 등으로 보험료가 인상될 수 있음",
+    "correct": true,
+    "critical": false,
+    "key": "B"
+   },
+   {
+    "text": "갱신 시 보험료가 연 10%씩 자동으로 인상됨",
+    "correct": false,
+    "critical": false,
+    "key": "C"
+   },
+   {
+    "text": "모르겠다",
+    "correct": false,
+    "critical": false,
+    "key": "D"
+   }
+  ]
+ }
+]
