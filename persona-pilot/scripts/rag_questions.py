@@ -156,6 +156,21 @@ SPECIFIC_RULE = """
 - 세 보기는 **같은 종류의 다른 숫자·기간·조건**이어야 합니다 (예: 1년/2년/3년, 50%/70%/100%).
   오답 숫자도 설명서 안의 다른 숫자나 업계에서 흔한 숫자로 그럴듯하게 쓰세요. 상식으로 골라낼 수 있으면 안 됩니다."""
 
+# v6 (dy_rag6~): dy_rag5 도 15문항 중 3개만 찍기 검사 통과. 통과한 것은 모두 '업계 표준과 다른 숫자' 문항.
+# 그래서 정답을 숫자 하나로 정하고, 세 보기를 같은 단위의 숫자만으로 쓴다 (문장 단서 제거).
+NUMERIC_CASES = {"dy_rag6"}
+NUMERIC_RULE = """
+
+[중요 — 숫자형 문제만]
+- 쟁점은 분쟁 자료에서 가져오되, 정답이 **설명서에 적힌 숫자 하나**(기간·나이·비율·횟수·금액·일수)인 질문만 만드세요.
+  예) "이 상품은 가입 후 몇 년 안에 지급사유가 생기면 감액 지급하나요?" → 정답 "1년"
+- 숫자로 답할 수 없는 쟁점이면 0개.
+- 세 보기는 **같은 단위의 숫자만** 쓰세요 (예: "1년" / "2년" / "3년", "50%" / "70%" / "80%"). 설명 문장을 붙이지 마세요.
+  조건이 꼭 필요하면 질문에 넣고, 보기는 숫자만 다르게 하세요.
+- 오답 숫자는 업계에서 흔한 숫자나 설명서 안의 다른 숫자로 고르세요. 정답이 '가운데 값'으로만 몰리지 않게 하세요.
+- 업계 표준 숫자를 그대로 쓰는 조항(암 보장개시 90일, 자살 2년, 납입최고 14일 등)보다
+  **이 상품만의 숫자**(감액 기간·비율, 지급 횟수·한도, 지급기간, 갱신 주기, 가입 나이, 환급금 등)를 우선하세요."""
+
 
 def fmt_cases(cases):
     def cut(s):
@@ -183,7 +198,8 @@ def stage_generate(case):
         prev = "\n".join(f"- {f['question']}" for f in facts) or "(없음)"
         prompt = Q_PROMPT.format(clause_id=c["clause_id"], clause_title=c["title"], clause_text=c["text"],
                                  n=len(s["cases"]), cases=fmt_cases(s["cases"]), guide=guide, prev=prev,
-                                 extra="" if case in ("dy_rag", "dy_rag2", "dy_rag3", "dy_rag4") else SPECIFIC_RULE)
+                                 extra="" if case in ("dy_rag", "dy_rag2", "dy_rag3", "dy_rag4")
+                                 else NUMERIC_RULE if case in NUMERIC_CASES else SPECIFIC_RULE)
         out = bm.call_json(prompt, f"rag_question:{case}:{c['clause_id']}", Q_SCHEMA, thinking="adaptive",
                            effort="medium", max_tokens=6000)
         for q in out["questions"]:
@@ -236,6 +252,19 @@ R_PROMPT = """아래 3지선다 검증 질문의 보기를 다시 쓰세요. 설
 - 세 보기 모두 같은 문장 구조, 같은 길이(20~40자), 같은 확신 정도. '예/아니요'로 시작하지 마세요.
   셋 중 어느 것도 '가장 신중해 보이는 보기'가 되면 안 됩니다."""
 
+R_PROMPT_NUM = """아래 숫자형 3지선다 문제의 보기를 다시 쓰세요. 설명서를 읽지 않은 사람이 {rate} 정답을 골랐습니다
+(보험 상식이나 '그럴듯한 값'으로 맞힌 것).
+
+[질문] {question}
+[정답 내용] {answer}
+[이전 보기] {complaint_wrong}
+
+- correct: 정답 숫자만 (단위 포함, 예: "45일").
+- wrong_case / wrong_opposite: 같은 단위의 다른 숫자. 하나는 정답보다 크게, 하나는 작게 하지 말고 섞어서,
+  **보험 상식으로 가장 그럴듯해 보이는 숫자**(업계 표준값)를 오답에 넣으세요. 정답이 업계 표준값이면 그 문제는 바꿀 수 없으니 그대로 두세요.
+- wrong_case_critical: 실제보다 더 많이·더 오래 받는다고 믿게 되는 숫자이면 true.
+- 설명 문장을 붙이지 마세요."""
+
 
 def stage_refine(case, limit=0.4, rounds=2):
     bm = load("b_modu_style", "b_modu_style.py")
@@ -250,7 +279,7 @@ def stage_refine(case, limit=0.4, rounds=2):
             break
         for f in bad:
             q = raw[f["question"]]
-            out = bm.call_json(R_PROMPT.format(rate=f"{rates[f['fact_id']]:.0%}", question=f["question"], answer=f["answer"],
+            out = bm.call_json((R_PROMPT_NUM if case in NUMERIC_CASES else R_PROMPT).format(rate=f"{rates[f['fact_id']]:.0%}", question=f["question"], answer=f["answer"],
                                                complaint_wrong=" / ".join(w["text"] for w in q["wrong"])),
                                f"rag_refine:{case}:{f['fact_id']}", R_SCHEMA, thinking="adaptive", effort="medium",
                                max_tokens=3000)

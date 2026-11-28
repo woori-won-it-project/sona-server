@@ -1,0 +1,255 @@
+[
+ {
+  "fact_id": "R1",
+  "options": [
+   {
+    "text": "100%",
+    "correct": false,
+    "critical": false,
+    "key": "A"
+   },
+   {
+    "text": "25%",
+    "correct": false,
+    "critical": true,
+    "key": "B"
+   },
+   {
+    "text": "50%",
+    "correct": true,
+    "critical": false,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "R10",
+  "options": [
+   {
+    "text": "14일",
+    "correct": true,
+    "critical": false,
+    "key": "A"
+   },
+   {
+    "text": "10일",
+    "correct": false,
+    "critical": false,
+    "key": "B"
+   },
+   {
+    "text": "30일",
+    "correct": false,
+    "critical": true,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "R11",
+  "options": [
+   {
+    "text": "0원",
+    "correct": false,
+    "critical": false,
+    "key": "A"
+   },
+   {
+    "text": "2,336,400원",
+    "correct": false,
+    "critical": true,
+    "key": "B"
+   },
+   {
+    "text": "1,025,230원",
+    "correct": true,
+    "critical": false,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "R2",
+  "options": [
+   {
+    "text": "10년",
+    "correct": true,
+    "critical": false,
+    "key": "A"
+   },
+   {
+    "text": "15년",
+    "correct": false,
+    "critical": true,
+    "key": "B"
+   },
+   {
+    "text": "5년",
+    "correct": false,
+    "critical": false,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "R3",
+  "options": [
+   {
+    "text": "4가지",
+    "correct": false,
+    "critical": false,
+    "key": "A"
+   },
+   {
+    "text": "6가지",
+    "correct": true,
+    "critical": false,
+    "key": "B"
+   },
+   {
+    "text": "8가지",
+    "correct": false,
+    "critical": false,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "R4",
+  "options": [
+   {
+    "text": "100%",
+    "correct": false,
+    "critical": true,
+    "key": "A"
+   },
+   {
+    "text": "30%",
+    "correct": false,
+    "critical": false,
+    "key": "B"
+   },
+   {
+    "text": "50%",
+    "correct": true,
+    "critical": false,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "R5",
+  "options": [
+   {
+    "text": "6개월",
+    "correct": false,
+    "critical": false,
+    "key": "A"
+   },
+   {
+    "text": "2년",
+    "correct": false,
+    "critical": true,
+    "key": "B"
+   },
+   {
+    "text": "1년",
+    "correct": true,
+    "critical": false,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "R6",
+  "options": [
+   {
+    "text": "3년",
+    "correct": false,
+    "critical": false,
+    "key": "A"
+   },
+   {
+    "text": "1년",
+    "correct": false,
+    "critical": true,
+    "key": "B"
+   },
+   {
+    "text": "2년",
+    "correct": true,
+    "critical": false,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "R7",
+  "options": [
+   {
+    "text": "45일",
+    "correct": true,
+    "critical": false,
+    "key": "A"
+   },
+   {
+    "text": "60일",
+    "correct": false,
+    "critical": true,
+    "key": "B"
+   },
+   {
+    "text": "30일",
+    "correct": false,
+    "critical": false,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "R8",
+  "options": [
+   {
+    "text": "90세",
+    "correct": false,
+    "critical": false,
+    "key": "A"
+   },
+   {
+    "text": "80세",
+    "correct": false,
+    "critical": false,
+    "key": "B"
+   },
+   {
+    "text": "100세",
+    "correct": true,
+    "critical": false,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "R9",
+  "options": [
+   {
+    "text": "180일",
+    "correct": false,
+    "critical": true,
+    "key": "A"
+   },
+   {
+    "text": "30일",
+    "correct": false,
+    "critical": false,
+    "key": "B"
+   },
+   {
+    "text": "90일",
+    "correct": true,
+    "critical": false,
+    "key": "C"
+   }
+  ]
+ }
+]
