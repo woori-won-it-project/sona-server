@@ -1,0 +1,347 @@
+[
+ {
+  "fact_id": "R1",
+  "options": [
+   {
+    "text": "최초 갑상선암 진단일부터 1년까지이며, 전이 진단일에 기간을 새로 세지 않는다.",
+    "correct": false,
+    "critical": false,
+    "key": "A"
+   },
+   {
+    "text": "림프절 전이 진단일부터 10년까지이며, 전이 진단일에 기간을 새로 센다.",
+    "correct": false,
+    "critical": true,
+    "key": "B"
+   },
+   {
+    "text": "최초 갑상선암 진단일부터 10년까지이며, 전이 진단일에 기간을 새로 세지 않는다.",
+    "correct": true,
+    "critical": false,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "R10",
+  "options": [
+   {
+    "text": "청약한 날부터 30일 이내에 청약을 철회할 수 있다",
+    "correct": false,
+    "critical": false,
+    "key": "A"
+   },
+   {
+    "text": "청약한 날부터 15일 이내에 청약을 철회할 수 있다",
+    "correct": false,
+    "critical": false,
+    "key": "B"
+   },
+   {
+    "text": "청약한 날부터 45일 이내에 청약을 철회할 수 있다",
+    "correct": true,
+    "critical": false,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "R11",
+  "options": [
+   {
+    "text": "종료 전 암보장개시일 이전 암을 처음 진단받아도 자동갱신되지 않는다",
+    "correct": false,
+    "critical": false,
+    "key": "A"
+   },
+   {
+    "text": "종료 전 암보장개시일 이후 암 등을 처음 진단받으면 자동갱신되지 않는다",
+    "correct": true,
+    "critical": false,
+    "key": "B"
+   },
+   {
+    "text": "종료 전 암 등을 처음 진단받아 보험금을 받아도 계약은 자동갱신된다",
+    "correct": false,
+    "critical": true,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "R12",
+  "options": [
+   {
+    "text": "최초는 계약일부터 바로, 갱신은 갱신일부터 보장된다",
+    "correct": false,
+    "critical": true,
+    "key": "A"
+   },
+   {
+    "text": "최초·갱신 모두 각 계약일부터 90일 경과 다음 날부터 보장된다",
+    "correct": false,
+    "critical": false,
+    "key": "B"
+   },
+   {
+    "text": "최초는 계약일부터 90일 경과 다음 날부터, 갱신은 갱신일부터 보장된다",
+    "correct": true,
+    "critical": false,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "R13",
+  "options": [
+   {
+    "text": "최고 안내가 도달하지 않으면 최고기간 종료 뒤에도 계약은 유지됩니다.",
+    "correct": false,
+    "critical": true,
+    "key": "A"
+   },
+   {
+    "text": "보험기간과 관계없이 7일 이상 최고기간 종료 다음 날 계약이 해지됩니다.",
+    "correct": false,
+    "critical": false,
+    "key": "B"
+   },
+   {
+    "text": "14일 이상(1년 미만은 7일 이상) 최고기간 종료 다음 날 해지됩니다.",
+    "correct": true,
+    "critical": false,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "R14",
+  "options": [
+   {
+    "text": "암보장개시일은 부활 후 치료를 시작한 날부터 다시 시작된다.",
+    "correct": false,
+    "critical": true,
+    "key": "A"
+   },
+   {
+    "text": "암보장개시일은 부활일부터 90일을 포함해 지난 날의 다음 날부터 시작된다.",
+    "correct": true,
+    "critical": false,
+    "key": "B"
+   },
+   {
+    "text": "암보장개시일은 부활일부터 1년이 지난 날의 다음 날부터 시작된다.",
+    "correct": false,
+    "critical": false,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "R15",
+  "options": [
+   {
+    "text": "해약환급금은 없어 0원을 돌려받습니다",
+    "correct": false,
+    "critical": false,
+    "key": "A"
+   },
+   {
+    "text": "납입보험료 전액인 1,259,400원을 돌려받습니다",
+    "correct": false,
+    "critical": true,
+    "key": "B"
+   },
+   {
+    "text": "해약환급금 예시액인 108,960원을 돌려받습니다",
+    "correct": true,
+    "critical": false,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "R2",
+  "options": [
+   {
+    "text": "면역치료만 받은 해엔 미지급, 이후 주요치료를 받으면 연 1회 지급될 수 있습니다.",
+    "correct": true,
+    "critical": false,
+    "key": "A"
+   },
+   {
+    "text": "요양 중 면역·통증완화 치료만 받아도 해당 연도 1,000만원이 지급됩니다.",
+    "correct": false,
+    "critical": true,
+    "key": "B"
+   },
+   {
+    "text": "면역치료만 받은 해엔 미지급이고, 남은 10년간 지급 대상에서 제외됩니다.",
+    "correct": false,
+    "critical": false,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "R3",
+  "options": [
+   {
+    "text": "직접 목적의 비급여 암 수술·항암치료비도 주요치료비에서 제외됩니다",
+    "correct": false,
+    "critical": false,
+    "key": "A"
+   },
+   {
+    "text": "암 치료 후유증·합병증 치료비는 비급여 암 주요치료비에 포함되지 않습니다",
+    "correct": true,
+    "critical": false,
+    "key": "B"
+   },
+   {
+    "text": "암 치료 후 통증·면역치료비는 비급여 암 주요치료비에 포함됩니다",
+    "correct": false,
+    "critical": true,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "R4",
+  "options": [
+   {
+    "text": "신체 표면에서 에너지를 최대로 발산한 뒤 심부로 계속 보내도록 조절한다",
+    "correct": false,
+    "critical": true,
+    "key": "A"
+   },
+   {
+    "text": "일정 깊이에 도달하기 전에 에너지를 대부분 소진하고 멈추도록 조절한다",
+    "correct": false,
+    "critical": false,
+    "key": "B"
+   },
+   {
+    "text": "종양이 있는 부위에서 에너지를 최대로 발산한 뒤 멈추도록 조절한다",
+    "correct": true,
+    "critical": false,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "R5",
+  "options": [
+   {
+    "text": "최초 진단이 계약 후 1년 전이면 지급기간 내 치료비는 지급되지 않습니다.",
+    "correct": false,
+    "critical": false,
+    "key": "A"
+   },
+   {
+    "text": "최초 진단이 계약 후 1년 전이면 지급기간 내 치료비는 전액 지급됩니다.",
+    "correct": false,
+    "critical": true,
+    "key": "B"
+   },
+   {
+    "text": "최초 진단이 계약 후 1년 전이면 지급기간 내 치료비는 50% 지급됩니다.",
+    "correct": true,
+    "critical": false,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "R6",
+  "options": [
+   {
+    "text": "암 진단 후 보험기간이 끝나면 지급기간 안 치료도 보험금이 지급되지 않는다.",
+    "correct": false,
+    "critical": false,
+    "key": "A"
+   },
+   {
+    "text": "암 진단 후 계약이 해지돼도 지급기간 안 치료는 보험금이 지급된다.",
+    "correct": false,
+    "critical": true,
+    "key": "B"
+   },
+   {
+    "text": "암 진단 후 보험기간이 끝나도 지급기간 안 치료는 보험금이 지급된다.",
+    "correct": true,
+    "critical": false,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "R7",
+  "options": [
+   {
+    "text": "암보장개시 후 진단이면, 1년 이내라도 각 차년도 치료비는 전액 지급됩니다.",
+    "correct": false,
+    "critical": true,
+    "key": "A"
+   },
+   {
+    "text": "계약 후 1년 안 최초 진단이면, 첫 차년도 치료비만 50% 지급됩니다.",
+    "correct": false,
+    "critical": false,
+    "key": "B"
+   },
+   {
+    "text": "계약 후 1년 안 최초 진단이면, 이후 각 차년도 치료비는 50% 지급됩니다.",
+    "correct": true,
+    "critical": false,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "R8",
+  "options": [
+   {
+    "text": "가입 후 2년 이내라도 정신질환 중 자살은 지급제한 예외라고 안내합니다",
+    "correct": false,
+    "critical": true,
+    "key": "A"
+   },
+   {
+    "text": "가입 후 기간과 관계없이 자살이면 보험금 지급이 제한된다고 안내합니다",
+    "correct": false,
+    "critical": false,
+    "key": "B"
+   },
+   {
+    "text": "가입 후 2년 이내 자살이면 보험금 지급이 제한된다고 안내합니다",
+    "correct": true,
+    "critical": false,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "R9",
+  "options": [
+   {
+    "text": "청약서 질문은 설계사에게 구두로 알리고, 미기재해도 고지한 것으로 본다",
+    "correct": false,
+    "critical": true,
+    "key": "A"
+   },
+   {
+    "text": "청약서 질문은 사실대로 알리고, 위반 시 보장 제한·계약 해지가 될 수 있다",
+    "correct": true,
+    "critical": false,
+    "key": "B"
+   },
+   {
+    "text": "청약서 질문은 일부만 사실대로 알리고, 누락 시 계약이 반드시 해지된다",
+    "correct": false,
+    "critical": false,
+    "key": "C"
+   }
+  ]
+ }
+]

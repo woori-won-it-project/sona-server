@@ -141,7 +141,20 @@ Q_PROMPT = """보험 상품설명서의 오해 소지를 검사하기 위한 3�
 - 세 보기 모두 20~40자, 같은 문장 구조·같은 말투·같은 확신 정도. '예/아니요'로 시작하지 마세요.
   정답만 길거나 자세하거나 신중해 보이면 안 됩니다.
 - key_phrases: 정답 근거가 되는 설명서 문구 1~3개, 설명서에 적힌 글자 그대로 (각 4~20자).
-- evidence_cases: 질문의 근거로 쓴 분쟁 자료 case_key 목록."""
+- evidence_cases: 질문의 근거로 쓴 분쟁 자료 case_key 목록.{extra}"""
+
+# v5 (dy_rag5~, 2026-11-28): dy_rag4 는 16문항 중 13개를 Luna 가 읽지 않고 맞힘 (업계 공통 규칙이라).
+# 쟁점은 그대로 분쟁 자료에서 가져오되, 묻는 것은 '이 상품 설명서에만 적힌 숫자·기간·비율·조건'으로 좁힌다.
+SPECIFIC_RULE = """
+
+[중요 — 보험 상식으로 맞힐 수 없게]
+- 쟁점은 분쟁 자료에서 가져오되, 질문은 **이 상품 설명서에 적힌 구체적인 숫자·기간·비율·횟수·금액·대상**을 묻습니다.
+  예) 나쁜 질문: "가입 초기에는 보험금이 줄어들 수 있나요?" (업계 공통이라 누구나 맞힘)
+      좋은 질문: "이 상품은 가입 후 언제까지 지급사유가 생기면 몇 %를 주나요?"
+- 업계에서 흔한 규칙(암 보장개시 90일, 자살 2년 면책, 납입최고 14일, 청약철회 15일·30일 등)을 그대로 묻지 마세요.
+  그런 조항이면 이 상품만의 숫자·조건과 엮어서 물으세요. 그럴 수 없으면 0개.
+- 세 보기는 **같은 종류의 다른 숫자·기간·조건**이어야 합니다 (예: 1년/2년/3년, 50%/70%/100%).
+  오답 숫자도 설명서 안의 다른 숫자나 업계에서 흔한 숫자로 그럴듯하게 쓰세요. 상식으로 골라낼 수 있으면 안 됩니다."""
 
 
 def fmt_cases(cases):
@@ -169,7 +182,8 @@ def stage_generate(case):
         c = clauses[s["clause_id"]]
         prev = "\n".join(f"- {f['question']}" for f in facts) or "(없음)"
         prompt = Q_PROMPT.format(clause_id=c["clause_id"], clause_title=c["title"], clause_text=c["text"],
-                                 n=len(s["cases"]), cases=fmt_cases(s["cases"]), guide=guide, prev=prev)
+                                 n=len(s["cases"]), cases=fmt_cases(s["cases"]), guide=guide, prev=prev,
+                                 extra="" if case in ("dy_rag", "dy_rag2", "dy_rag3", "dy_rag4") else SPECIFIC_RULE)
         out = bm.call_json(prompt, f"rag_question:{case}:{c['clause_id']}", Q_SCHEMA, thinking="adaptive",
                            effort="medium", max_tokens=6000)
         for q in out["questions"]:
