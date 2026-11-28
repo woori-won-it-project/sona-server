@@ -13,7 +13,9 @@ public record RunPlan(
         List<PersonaSlot> personas,
         List<QuestionSnapshot> questions) {
 
-    public record PersonaSlot(long reviewPersonaId, PersonaProfile profile, InfoPath infoPath, String card) {}
+    /** card: 답할 때 소개 글, readingCard: 읽고 메모할 때 소개 글 (메모 습관 포함) */
+    public record PersonaSlot(
+            long reviewPersonaId, PersonaProfile profile, InfoPath infoPath, String card, String readingCard) {}
 
     public record QuestionSnapshot(
             long questionId, String questionText, String referenceAnswer, String referenceReason) {}

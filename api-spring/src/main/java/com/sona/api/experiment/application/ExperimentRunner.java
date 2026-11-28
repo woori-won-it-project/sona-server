@@ -130,7 +130,7 @@ public class ExperimentRunner {
         String text = slot.infoPath() == InfoPath.GUIDE ? plan.guideText() : agentTalk;
         ReadResult read = PersonaReader.read(slot.profile(), text, units, hardTerms);
 
-        Memo memo = ai.writeMemo(slot.card(), slot.infoPath().label(), read.seenText(), read.memoBudget());
+        Memo memo = ai.writeMemo(slot.readingCard(), slot.infoPath().label(), read.seenText(), read.memoBudget());
         List<String> lines = PersonaReader.cutMemo(memo.lines() == null ? List.of() : memo.lines(), read.memoBudget());
         String memoText = lines.isEmpty()
                 ? "(기억나는 내용이 없음)"

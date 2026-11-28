@@ -24,11 +24,26 @@ class PersonaReaderTest {
     }
 
     @Test
-    void 용어_이해_하는_긴_문장이_잘리고_용어가_모두_가려진다() {
+    void 용어_이해_하는_60자가_넘는_문장이_잘린다() {
+        String longSentence = "가".repeat(90) + "는 보장하지 않습니다.";
         var p = new PersonaProfile(1, FinancialLiteracy.LOW, 1.0, Disposition.CAUTIOUS);
-        var r = PersonaReader.read(p, GUIDE, List.of(), TERMS);
-        assertThat(r.seenText()).doesNotContain("암 주요치료").doesNotContain("갱신형");
-        assertThat(r.cutSentences()).isPositive();
+        var r = PersonaReader.read(p, longSentence, List.of(), List.of());
+        assertThat(r.cutSentences()).isEqualTo(1);
+        assertThat(r.seenText()).hasSize(61).doesNotContain("보장하지");
+    }
+
+    @Test
+    void 용어_이해_하는_어려운_용어를_대부분_가린다() {
+        // 가릴 확률 70%: 여러 사람의 평균이 절반을 넘어야 한다
+        int masked = 0;
+        int total = 0;
+        for (long seed = 1; seed <= 30; seed++) {
+            var p = new PersonaProfile(seed, FinancialLiteracy.LOW, 1.0, Disposition.CAUTIOUS);
+            masked +=
+                    PersonaReader.read(p, GUIDE, List.of(), TERMS).maskedTerms().size();
+            total += TERMS.size();
+        }
+        assertThat((double) masked / total).isBetween(0.5, 0.9);
     }
 
     @Test
@@ -56,10 +71,13 @@ class PersonaReaderTest {
     }
 
     @Test
-    void 메모_한도는_꼼꼼함에_따라_150자에서_400자() {
-        assertThat(PersonaReader.memoBudget(0.1)).isEqualTo(150);
-        assertThat(PersonaReader.memoBudget(0.9)).isEqualTo(400);
-        assertThat(PersonaReader.memoBudget(0.525)).isEqualTo(275);
+    void 메모_한도는_꼼꼼함에_따라_200자에서_600자_그리고_이해_단계_배수() {
+        assertThat(PersonaReader.memoBudget(0.1, FinancialLiteracy.LOW)).isEqualTo(200);
+        assertThat(PersonaReader.memoBudget(0.9, FinancialLiteracy.LOW)).isEqualTo(600);
+        assertThat(PersonaReader.memoBudget(0.525, FinancialLiteracy.LOW)).isEqualTo(400);
+        // 용어 이해 단계 배수: 중 x1.6, 상 x3.0
+        assertThat(PersonaReader.memoBudget(0.525, FinancialLiteracy.MEDIUM)).isEqualTo(640);
+        assertThat(PersonaReader.memoBudget(0.525, FinancialLiteracy.HIGH)).isEqualTo(1200);
     }
 
     @Test

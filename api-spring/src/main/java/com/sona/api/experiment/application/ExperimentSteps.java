@@ -103,7 +103,7 @@ public class ExperimentSteps {
         Persona p = rp.getPersona();
         PersonaProfile profile = new PersonaProfile(
                 p.getId(), p.getFinancialLiteracy(), p.getDiligence().doubleValue(), p.getDisposition());
-        return new PersonaSlot(rp.getId(), profile, p.getInfoPath(), PersonaCard.of(p));
+        return new PersonaSlot(rp.getId(), profile, p.getInfoPath(), PersonaCard.of(p), PersonaCard.forReading(p));
     }
 
     /** 보기가 없는 질문 id */

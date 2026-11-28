@@ -6,11 +6,12 @@ import java.util.regex.Pattern;
 
 /**
  * 문장 하나가 읽힐 확률 (파일럿 config/reading_rules.yaml, 모두 가정값).
- * 읽힘 확률 = (0.55 + 0.25 x 꼼꼼함) x 위치 x 형식 x 종류, 최대 1.
+ * 읽힘 확률 = (0.70 + 0.25 x 꼼꼼함) x 위치 x 형식 x 종류, 최대 1.
+ * 기본값 0.70 은 목표 정답률(하 40 · 중 60 · 상 80%대)에 맞춘 값 (EVIDENCE.md 8-10, 이전 0.55).
  */
 public final class ReadingRules {
 
-    static final double BUDGET_BASE = 0.55;
+    static final double BUDGET_BASE = 0.70;
     static final double BUDGET_SLOPE = 0.25;
     /** 글의 앞 30% 는 위치 가중치 1.0, 끝으로 갈수록 0.7 까지 줄어든다 */
     static final double POSITION_FULL_UNTIL = 0.30;
