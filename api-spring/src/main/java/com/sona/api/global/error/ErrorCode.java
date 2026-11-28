@@ -13,13 +13,14 @@ public enum ErrorCode {
 
     // 공통
     INVALID_INPUT(HttpStatus.BAD_REQUEST, "입력값을 확인해 주세요."),
-    UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다."),
+    UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "로그인 정보가 유효하지 않거나 만료되었습니다."),
     NOT_FOUND(HttpStatus.NOT_FOUND, "요청한 자원을 찾을 수 없습니다."),
     INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 오류가 발생했습니다. 잠시 후 다시 시도해 주세요."),
     AI_CALL_FAILED(HttpStatus.BAD_GATEWAY, "AI 처리 중 오류가 발생했습니다. 다시 시도해 주세요."),
 
     // 로그인
     LOGIN_FAILED(HttpStatus.UNAUTHORIZED, "사번 또는 비밀번호가 올바르지 않습니다."),
+    INVALID_CSRF_TOKEN(HttpStatus.FORBIDDEN, "CSRF Token이 유효하지 않습니다."),
 
     // 검수 상태
     INVALID_REVIEW_STATUS(HttpStatus.CONFLICT, "지금 단계에서는 할 수 없는 작업입니다."),
