@@ -1,0 +1,1 @@
+{"level": "empty", "check": 0, "version": "none", "rep": 4, "memo": "", "answers": {"R1": "A", "R2": "C", "R3": "B", "R4": "A", "R5": "C"}, "correct": {"R1": true, "R2": true, "R3": true, "R4": false, "R5": true}}
