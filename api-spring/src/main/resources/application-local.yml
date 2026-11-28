@@ -12,3 +12,7 @@ spring:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
+
+sona:
+  cors:
+    allowed-origins: ${SONA_CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:3000}
