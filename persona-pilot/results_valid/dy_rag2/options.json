@@ -1,0 +1,71 @@
+[
+ {
+  "fact_id": "R1",
+  "options": [
+   {
+    "text": "암 치료 후에는 직접적인 암수술·항암치료도 보장 대상에 포함되지 않는다",
+    "correct": false,
+    "critical": false,
+    "key": "A"
+   },
+   {
+    "text": "암 치료 과정과 이어진 통증·후유증 치료도 보장 대상에 포함된다",
+    "correct": false,
+    "critical": true,
+    "key": "B"
+   },
+   {
+    "text": "암 치료로 생긴 후유증·합병증 치료는 보장 대상에 포함되지 않는다",
+    "correct": true,
+    "critical": false,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "R2",
+  "options": [
+   {
+    "text": "계약 1년 이내 진단이면 이후 치료비도 지급하지 않는다",
+    "correct": false,
+    "critical": false,
+    "key": "A"
+   },
+   {
+    "text": "보험금 지급기간 중 각 차년도별 지급금액의 50%를 지급한다",
+    "correct": true,
+    "critical": false,
+    "key": "B"
+   },
+   {
+    "text": "암보장개시일 이후 진단이면 치료 시기와 관계없이 전액 지급한다",
+    "correct": false,
+    "critical": true,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "R3",
+  "options": [
+   {
+    "text": "부활일부터 1년이 지난 날의 다음 날부터 암보장이 시작된다.",
+    "correct": false,
+    "critical": false,
+    "key": "A"
+   },
+   {
+    "text": "부활 뒤 치료받으면 보장되므로 부활일부터 암보장이 시작된다.",
+    "correct": false,
+    "critical": true,
+    "key": "B"
+   },
+   {
+    "text": "부활일부터 90일이 지난 날의 다음 날부터 암보장이 시작된다.",
+    "correct": true,
+    "critical": false,
+    "key": "C"
+   }
+  ]
+ }
+]

@@ -1,0 +1,370 @@
+[
+ {
+  "fact_id": "R1",
+  "options": [
+   {
+    "text": "나중에 진단된 다른 암의 치료는 보험금 지급 대상에서 제외됩니다.",
+    "correct": false,
+    "critical": false,
+    "key": "A"
+   },
+   {
+    "text": "전이된 림프절암은 원발암과 별개로 보아 그 진단일부터 다시 계산합니다.",
+    "correct": false,
+    "critical": true,
+    "key": "B"
+   },
+   {
+    "text": "가장 먼저 확정된 위암의 진단일을 기준으로 계산합니다.",
+    "correct": true,
+    "critical": false,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "R2",
+  "options": [
+   {
+    "text": "면역력 강화 치료를 받으면 다른 암 주요치료도 지급 대상이 아닙니다.",
+    "correct": false,
+    "critical": false,
+    "key": "A"
+   },
+   {
+    "text": "면역력 강화 치료 자체는 암 주요치료비 지급 대상이 아닙니다.",
+    "correct": true,
+    "critical": false,
+    "key": "B"
+   },
+   {
+    "text": "면역력 강화 치료 자체도 암 주요치료비 지급 대상입니다.",
+    "correct": false,
+    "critical": true,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "R3",
+  "options": [
+   {
+    "text": "종양 부위에서 에너지를 거의 내지 않아 정상 조직 영향이 더 큽니다",
+    "correct": false,
+    "critical": false,
+    "key": "A"
+   },
+   {
+    "text": "엑스선처럼 진행 경로의 모든 조직에 비슷한 영향을 줍니다",
+    "correct": false,
+    "critical": false,
+    "key": "B"
+   },
+   {
+    "text": "종양 부위에서 에너지를 최대로 내고 멈춰 앞뒤 정상 조직 영향을 최소화합니다",
+    "correct": true,
+    "critical": false,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "R4",
+  "options": [
+   {
+    "text": "치료가 1년 경과 뒤여도 지급기간의 각 차년도별 지급액은 50%이다",
+    "correct": true,
+    "critical": false,
+    "key": "A"
+   },
+   {
+    "text": "최초진단이 1년 안이면 이후 지급기간의 치료비는 전혀 받지 못한다",
+    "correct": false,
+    "critical": false,
+    "key": "B"
+   },
+   {
+    "text": "치료가 1년 경과 뒤이면 감액 없이 각 차년도별 전액을 받는다",
+    "correct": false,
+    "critical": true,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "R5",
+  "options": [
+   {
+    "text": "보험기간이 끝나도 지급기간이 남은 치료는 보험금이 지급된다",
+    "correct": true,
+    "critical": false,
+    "key": "A"
+   },
+   {
+    "text": "보험기간이 끝나면 지급기간이 남아도 치료비는 지급되지 않는다",
+    "correct": false,
+    "critical": false,
+    "key": "B"
+   },
+   {
+    "text": "보험기간 중 진단받으면 지급기간 종료 뒤 치료도 계속 지급된다",
+    "correct": false,
+    "critical": true,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "R6",
+  "options": [
+   {
+    "text": "암보장개시일 뒤 진단됐으니 치료 시기와 무관하게 1,000만원을 받는다",
+    "correct": false,
+    "critical": true,
+    "key": "A"
+   },
+   {
+    "text": "진단이 계약 1년 경과 전이면 이후 치료도 차년도별 500만원을 받는다",
+    "correct": true,
+    "critical": false,
+    "key": "B"
+   },
+   {
+    "text": "진단이 계약 1년 경과 전이면 이후 치료는 보험금을 받지 못한다",
+    "correct": false,
+    "critical": false,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "R7",
+  "options": [
+   {
+    "text": "고의 사고와 가입 후 2년 이내 자살은 보험금 지급이 제한됩니다.",
+    "correct": true,
+    "critical": false,
+    "key": "A"
+   },
+   {
+    "text": "고의 사고와 가입 후 2년이 지난 자살도 모두 보험금 지급이 제한됩니다.",
+    "correct": false,
+    "critical": false,
+    "key": "B"
+   },
+   {
+    "text": "정신질환 상태의 자해라면 사망보험금과 별도로 납입보험료도 돌려받습니다.",
+    "correct": false,
+    "critical": true,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "R8",
+  "options": [
+   {
+    "text": "청약서에 하나라도 빠뜨리면 계약은 즉시 무효가 되고 보험금도 전혀 못 받는다",
+    "correct": false,
+    "critical": false,
+    "key": "A"
+   },
+   {
+    "text": "설계사에게 구두로 알렸다면 청약서에 적지 않아도 고지한 것이다",
+    "correct": false,
+    "critical": true,
+    "key": "B"
+   },
+   {
+    "text": "청약서 질문에 사실대로 알리고, 미고지 시 보장 제한 또는 해지가 가능하다",
+    "correct": true,
+    "critical": false,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "R9",
+  "options": [
+   {
+    "text": "만 65세 이상 전화계약도 청약일부터 30일을 초과하면 철회가 제한됩니다.",
+    "correct": false,
+    "critical": false,
+    "key": "A"
+   },
+   {
+    "text": "모든 계약은 청약일부터 45일을 초과해야 청약철회가 제한됩니다.",
+    "correct": false,
+    "critical": true,
+    "key": "B"
+   },
+   {
+    "text": "청약일부터 45일을 초과하면 청약철회가 제한됩니다.",
+    "correct": true,
+    "critical": false,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "R10",
+  "options": [
+   {
+    "text": "피보험자가 95세이면 갱신되는 보험기간은 10년 만기입니다",
+    "correct": false,
+    "critical": true,
+    "key": "A"
+   },
+   {
+    "text": "피보험자가 95세이면 갱신되지 않아 보장이 종료됩니다",
+    "correct": false,
+    "critical": false,
+    "key": "B"
+   },
+   {
+    "text": "피보험자가 95세이면 갱신되는 보험기간은 1년 만기입니다",
+    "correct": true,
+    "critical": false,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "R11",
+  "options": [
+   {
+    "text": "최초 진단확정된 경우 현재 보험기간도 즉시 종료됩니다",
+    "correct": false,
+    "critical": false,
+    "key": "A"
+   },
+   {
+    "text": "최초 진단확정된 경우 해당 계약은 자동갱신되어 계속됩니다",
+    "correct": false,
+    "critical": true,
+    "key": "B"
+   },
+   {
+    "text": "최초 진단확정된 경우 해당 계약은 자동갱신되지 않습니다",
+    "correct": true,
+    "critical": false,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "R12",
+  "options": [
+   {
+    "text": "최초계약의 암 보장은 계약일부터 바로 시작된다",
+    "correct": false,
+    "critical": true,
+    "key": "A"
+   },
+   {
+    "text": "최초계약의 암 보장은 계약일 포함 90일 경과일부터 시작된다",
+    "correct": false,
+    "critical": false,
+    "key": "B"
+   },
+   {
+    "text": "최초계약의 암 보장은 계약일 포함 90일 경과 다음 날 시작된다",
+    "correct": true,
+    "critical": false,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "R13",
+  "options": [
+   {
+    "text": "부활계약의 암 보장은 부활일 포함 90일 경과 다음 날 시작된다",
+    "correct": true,
+    "critical": false,
+    "key": "A"
+   },
+   {
+    "text": "부활계약의 암 보장은 부활일 포함 90일 경과일부터 시작된다",
+    "correct": false,
+    "critical": false,
+    "key": "B"
+   },
+   {
+    "text": "부활계약의 암 보장은 부활일부터 바로 시작된다",
+    "correct": false,
+    "critical": true,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "R14",
+  "options": [
+   {
+    "text": "14일 이상(1년 미만은 7일 이상) 최고하고, 기간 종료 다음 날 해지한다",
+    "correct": true,
+    "critical": false,
+    "key": "A"
+   },
+   {
+    "text": "보험료 납입기일을 넘기면 최고기간 없이 그날 바로 계약이 해지된다",
+    "correct": false,
+    "critical": false,
+    "key": "B"
+   },
+   {
+    "text": "등기우편 최고를 받지 못하면 납입최고와 계약해지는 효력이 없다",
+    "correct": false,
+    "critical": true,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "R15",
+  "options": [
+   {
+    "text": "부활 후에는 90일이 지나도 암 치료비 지급사유가 되지 않습니다.",
+    "correct": false,
+    "critical": false,
+    "key": "A"
+   },
+   {
+    "text": "부활 후 치료를 받으면 해지 중 진단된 암도 지급사유가 됩니다.",
+    "correct": false,
+    "critical": true,
+    "key": "B"
+   },
+   {
+    "text": "부활 후 90일이 지난 뒤 최초 진단된 경우부터 지급사유가 됩니다.",
+    "correct": true,
+    "critical": false,
+    "key": "C"
+   }
+  ]
+ },
+ {
+  "fact_id": "R16",
+  "options": [
+   {
+    "text": "5년 시점 해약환급금은 지급되지 않아 0원입니다",
+    "correct": false,
+    "critical": false,
+    "key": "A"
+   },
+   {
+    "text": "5년 시점 해약환급금은 420,960원입니다",
+    "correct": true,
+    "critical": false,
+    "key": "B"
+   },
+   {
+    "text": "5년 시점 해약환급금은 납입보험료 1,168,200원입니다",
+    "correct": false,
+    "critical": true,
+    "key": "C"
+   }
+  ]
+ }
+]

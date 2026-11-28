@@ -36,8 +36,9 @@ def load(name, file):
     return m
 
 
-# 동양생명 암치료보험: 상품설명서(guide_only)에 다뤄지는 조항
-DY_CLAUSES = [7, 8, 11, 12, 28, 40]
+# 동양생명 암치료보험: 상품설명서(guide_only)에 다뤄질 수 있는 조항
+# v1 (2026-11-28): 7·8·11·12·28·40 → 5문항. v2: 질문 수를 늘리려고 15개로 넓힘 (설명서로 답할 수 없으면 LLM 이 0개를 낸다)
+DY_CLAUSES = [3, 4, 7, 8, 9, 11, 12, 13, 21, 24, 28, 31, 34, 35, 40]
 N_BASE, N_DEC = 14, 6
 FIELD_CHARS = 350  # 자료 칸별로 LLM 에 넘기는 글자 수
 
@@ -123,13 +124,22 @@ Q_PROMPT = """보험 상품설명서의 오해 소지를 검사하기 위한 3�
 [소비자가 읽는 상품설명서]
 {guide}
 
-만들 것: 이 조항에 대해 질문 0~2개 (관련 분쟁 자료가 없으면 0개).
+[이미 만든 질문 — 같은 내용을 다시 묻지 마세요]
+{prev}
+
+만들 것: 이 조항에 대해 질문 1~3개. 설명서에 이 조항 내용이 조금이라도 나오면 **최소 1개**는 만드세요
+(관련 분쟁 자료가 없으면 오답 하나는 소비자가 흔히 할 법한 오해로 쓰고 from_case 는 빈 문자열).
+설명서에 이 조항 내용이 전혀 없을 때만 0개.
 - 질문은 위 **상품설명서만 읽고 답할 수 있어야** 합니다. guide_quote 에 정답 근거 문장을 설명서에서 글자 그대로 옮기세요.
 - 누구나 아는 결론(예: 갱신하면 보험료가 오를 수 있다)이 아니라, 설명서에만 있는 **조건·시점·예외·대상·금액**을 묻습니다.
-- correct: 정답 보기 1개. wrong: 오답 보기 정확히 2개. 오답은 관련 분쟁 자료의 complaint(소비자가 믿은 것)에서 가져온
-  **실제로 분쟁이 난 오해**로 쓰고, from_case 에 그 자료의 case_key 를 적으세요 (근거 자료가 없으면 빈 문자열).
+- **정답이 늘 '덜 주는 쪽'이면 안 됩니다.** 소비자가 '못 받는다·덜 받는다'고 오해하기 쉬운데 실제로는 받는 경우
+  (예: 감액이지만 지급은 됨, 지급기간 안이면 계속 지급) 를 묻는 질문도 만드세요.
+- correct: 정답 보기 1개. wrong: 오답 보기 정확히 2개.
+  - 하나는 관련 분쟁 자료의 complaint(소비자가 믿은 것)에서 가져온 **실제로 분쟁이 난 오해**, from_case 에 그 case_key.
+  - 다른 하나는 **반대 방향** 오해 (정답보다 덜 받거나 더 불리하다고 믿는 것), from_case 는 빈 문자열.
 - critical = 실제보다 더 많이 받거나 없는 보장·권리를 있다고 믿는 오해이면 true.
-- 세 보기 모두 20~40자, 같은 문장 구조·같은 말투. 정답만 길거나 자세하거나 신중해 보이면 안 됩니다.
+- 세 보기 모두 20~40자, 같은 문장 구조·같은 말투·같은 확신 정도. '예/아니요'로 시작하지 마세요.
+  정답만 길거나 자세하거나 신중해 보이면 안 됩니다.
 - key_phrases: 정답 근거가 되는 설명서 문구 1~3개, 설명서에 적힌 글자 그대로 (각 4~20자).
 - evidence_cases: 질문의 근거로 쓴 분쟁 자료 case_key 목록."""
 
@@ -147,14 +157,19 @@ def stage_generate(case):
     bm = load("b_modu_style", "b_modu_style.py")
     d = case_dir(case)
     search = json.loads((d / "search.json").read_text(encoding="utf-8"))
-    guide = json.loads((ROOT / "results_c" / "path_docs.json").read_text(encoding="utf-8"))["guide_only"]["text"]
+    # v1: 상품설명서 2~4쪽(약 8천 자, guide_only). v2(dy_rag2~): 상품설명서 전체(약 1만 8천 자) — 실제 서비스처럼 전체를 읽는다
+    if case == "dy_rag":
+        guide = json.loads((ROOT / "results_c" / "path_docs.json").read_text(encoding="utf-8"))["guide_only"]["text"]
+    else:
+        guide = (ROOT / "results_b" / "document.txt").read_text(encoding="utf-8")
     clauses = {c["clause_id"]: c for c in dy_clauses()}
     compact = guide.replace(" ", "")
     raw, facts, options = [], [], []
     for s in search:
         c = clauses[s["clause_id"]]
+        prev = "\n".join(f"- {f['question']}" for f in facts) or "(없음)"
         prompt = Q_PROMPT.format(clause_id=c["clause_id"], clause_title=c["title"], clause_text=c["text"],
-                                 n=len(s["cases"]), cases=fmt_cases(s["cases"]), guide=guide)
+                                 n=len(s["cases"]), cases=fmt_cases(s["cases"]), guide=guide, prev=prev)
         out = bm.call_json(prompt, f"rag_question:{case}:{c['clause_id']}", Q_SCHEMA, thinking="adaptive",
                            effort="medium", max_tokens=6000)
         for q in out["questions"]:
