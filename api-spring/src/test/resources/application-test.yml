@@ -8,3 +8,9 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate
+
+sona:
+  auth:
+    # Isolated test profile keys. No environment or deployment secrets are needed.
+    jwt-key: ${random.value}${random.value}
+    csrf-key: ${random.value}${random.value}

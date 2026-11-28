@@ -1,9 +1,8 @@
 package com.sona.api.member.application;
 
-import com.sona.api.global.auth.TokenProvider;
 import com.sona.api.global.error.BusinessException;
 import com.sona.api.global.error.ErrorCode;
-import com.sona.api.member.api.LoginResponse;
+import com.sona.api.member.api.LoginResponse.MemberInfo;
 import com.sona.api.member.domain.Member;
 import com.sona.api.member.domain.MemberRepository;
 import lombok.RequiredArgsConstructor;
@@ -21,19 +20,14 @@ public class AuthService {
     private static final PasswordEncoder PASSWORD_ENCODER = PasswordEncoderFactories.createDelegatingPasswordEncoder();
 
     private final MemberRepository memberRepository;
-    private final TokenProvider tokenProvider;
 
-    public LoginResponse login(String employeeNumber, String password) {
+    public MemberInfo authenticate(String employeeNumber, String password) {
         // 사번이 없을 때와 비밀번호가 틀렸을 때 같은 에러: 어느 쪽이 틀렸는지 알려 주지 않는다
         Member member = memberRepository
                 .findByEmployeeNumber(employeeNumber)
                 .filter(m -> PASSWORD_ENCODER.matches(password, m.getPasswordHash()))
                 .orElseThrow(() -> new BusinessException(ErrorCode.LOGIN_FAILED));
 
-        return new LoginResponse(
-                tokenProvider.issue(member.getId()),
-                "Bearer",
-                tokenProvider.expiresInSeconds(),
-                new LoginResponse.MemberInfo(member.getId(), member.getEmployeeNumber(), member.getName()));
+        return new MemberInfo(member.getId(), member.getEmployeeNumber(), member.getName());
     }
 }

@@ -1,12 +1,14 @@
 package com.sona.api.global.auth;
 
 import java.util.Optional;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 /**
  * 임시 토큰: "mock-{회원ID}". 서명이 없어 위조가 쉬우므로 실제 배포 전에 JWT 구현으로 교체한다.
  */
 @Component
+@Profile("mock")
 public class MockTokenProvider implements TokenProvider {
 
     private static final String PREFIX = "mock-";
