@@ -91,8 +91,74 @@ def call_claude(prompt: str, purpose: str, json_schema: dict | None = None, extr
     return result
 
 
+# ---------- OpenAI (2026-11-28 추가: Claude 크레딧 소진으로 전환) ----------
+# LLM_PROVIDER=openai 이면 call_with_retry 가 OpenAI 로 보낸다. 모델은 OPENAI_MODEL (.env) 또는 settings.yaml openai_model.
+# 키는 OPENAI_API_KEY 환경 변수(.env)로만 읽는다.
+_oa_client = None
+_STOP = {"stop": "end_turn", "length": "max_tokens", "content_filter": "refusal"}
+
+
+def provider() -> str:
+    load_dotenv()
+    return (os.environ.get("LLM_PROVIDER") or SETTINGS.get("provider") or "anthropic").lower()
+
+
+def oa_client():
+    global _oa_client
+    if _oa_client is None:
+        load_dotenv()
+        import openai
+        _oa_client = openai.OpenAI()  # OPENAI_API_KEY 환경 변수 사용
+    return _oa_client
+
+
+def call_openai(prompt: str, purpose: str, json_schema: dict | None = None, extra_log: dict | None = None,
+                thinking: str | None = None, effort: str | None = None, max_tokens: int | None = None) -> dict:
+    """call_claude 와 같은 모양으로 돌려준다.
+    생각 기능: Claude 에서 thinking=disabled 였던 호출(페르소나 읽기·답하기)은 reasoning_effort=none (생각 토큰 0),
+    생각을 켰던 호출(보기 만들기 등)은 effort 값(없으면 medium)을 쓴다. gpt-6-luna 는 none/low/medium/high 지원, minimal 미지원."""
+    model = os.environ.get("OPENAI_MODEL") or SETTINGS.get("openai_model")
+    think = thinking or SETTINGS["thinking"]
+    reasoning = "none" if think == "disabled" else {"low": "low", "medium": "medium", "high": "high"}.get(effort or "", "medium")
+    params = {
+        "model": model,
+        "reasoning_effort": reasoning,
+        "messages": [{"role": "user", "content": prompt}],
+        # 생각(추론) 토큰도 한도에 들어가므로 Claude 때 값의 3배 (최소 4000)
+        "max_completion_tokens": max(4000, 3 * (max_tokens or SETTINGS["max_tokens"])),
+    }
+    if json_schema:
+        params["response_format"] = {"type": "json_schema",
+                                     "json_schema": {"name": "output", "schema": json_schema, "strict": True}}
+    start = time.perf_counter()
+    response = oa_client().chat.completions.create(**params)
+    ms = int((time.perf_counter() - start) * 1000)
+    choice = response.choices[0]
+    stop = _STOP.get(choice.finish_reason, choice.finish_reason)
+    if getattr(choice.message, "refusal", None):
+        stop = "refusal"
+    result = {
+        "text": choice.message.content or "",
+        "stop_reason": stop,
+        "model": response.model,
+        "usage": {"input_tokens": response.usage.prompt_tokens, "output_tokens": response.usage.completion_tokens},
+        "ms": ms,
+        "request_id": getattr(response, "_request_id", None) or response.id,
+    }
+    LOG.parent.mkdir(parents=True, exist_ok=True)
+    with _log_lock, LOG.open("a", encoding="utf-8") as f:
+        f.write(json.dumps({
+            "time": datetime.now().isoformat(timespec="seconds"), "purpose": purpose,
+            "model": response.model, "prompt_sha": prompt_sha(prompt), "stop_reason": stop,
+            **result["usage"], "ms": ms, "request_id": result["request_id"], **(extra_log or {}),
+        }, ensure_ascii=False) + "\n")
+    return result
+
+
 def call_with_retry(prompt: str, purpose: str, **kw) -> dict:
     """속도 제한·서버 오류는 잠시 쉬었다 다시 보낸다 (SDK 기본 재시도 2회에 더해 최대 3회)."""
+    if provider() == "openai":
+        return _retry_openai(prompt, purpose, **kw)
     for attempt in range(4):
         try:
             return call_claude(prompt, purpose, **kw)
@@ -103,6 +169,25 @@ def call_with_retry(prompt: str, purpose: str, **kw) -> dict:
                 raise  # 400·401 등은 다시 보내도 같으므로 바로 알린다
             wait = 10
         except anthropic.APIConnectionError:
+            wait = 10
+        if attempt == 3:
+            raise RuntimeError(f"{purpose}: 재시도 후에도 실패")
+        time.sleep(wait)
+    raise AssertionError
+
+
+def _retry_openai(prompt: str, purpose: str, **kw) -> dict:
+    import openai
+    for attempt in range(4):
+        try:
+            return call_openai(prompt, purpose, **kw)
+        except openai.RateLimitError:
+            wait = 20
+        except openai.APIStatusError as e:
+            if e.status_code < 500:
+                raise
+            wait = 10
+        except openai.APIConnectionError:
             wait = 10
         if attempt == 3:
             raise RuntimeError(f"{purpose}: 재시도 후에도 실패")

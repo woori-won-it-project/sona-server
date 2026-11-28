@@ -1,6 +1,8 @@
 # 실행 설정. 바꾸면 리포트의 '가정값 목록'에 함께 기록된다.
 # API 키는 여기에 쓰지 않는다. 환경 변수 ANTHROPIC_API_KEY 로만 읽는다.
 model: claude-haiku-5-5        # 응답·배경 이야기·설계사 화법·용어 뜻 모두 같은 모델
+# 2026-11-28: Claude 크레딧 소진으로 OpenAI 로 전환. .env 의 LLM_PROVIDER=openai 이면 아래 모델을 쓴다
+openai_model: gpt-6-luna
 # temperature: 명세서는 0 이지만 Haiku 5.5 는 temperature 값을 보내면 400 오류 → 보내지 않음 (기본값 사용)
 thinking: disabled              # disabled | adaptive. Haiku 5.5 는 기본이 생각 켜짐. 끄면 읽은 글로 바로 답함
 effort: low                     # low | medium | high (thinking: disabled 는 high 이하에서만 가능)
